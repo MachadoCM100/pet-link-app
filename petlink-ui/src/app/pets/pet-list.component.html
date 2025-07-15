@@ -1,0 +1,8 @@
+<h2>Available Pets</h2>
+<mat-list>
+  <mat-list-item *ngFor="let pet of pets">
+    <strong>{{ pet.name }}</strong> — {{ pet.type }}
+    <span *ngIf="pet.adopted" style="color: green;">(Adopted)</span>
+  </mat-list-item>
+</mat-list>
+

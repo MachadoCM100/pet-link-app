@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\PetLink.API.props" />
+</Project>
