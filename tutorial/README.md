@@ -11,7 +11,7 @@ PetLink is a full-stack web application for managing pet adoption records. It co
 
 ## Architecture
 
-```
+```txt
 PetLink Application
 ├── Frontend (Angular + TypeScript)
 │   ├── Authentication Module
@@ -26,6 +26,7 @@ PetLink Application
 ## Tutorial Sections
 
 ### Frontend (Angular/TypeScript)
+
 1. [Application Structure](./frontend/01-application-structure.md)
 2. [Routing and Navigation](./frontend/02-routing-navigation.md)
 3. [Authentication System](./frontend/03-authentication.md)
@@ -33,8 +34,10 @@ PetLink Application
 5. [Services and HTTP Communication](./frontend/05-services-http.md)
 6. [Models and Interfaces](./frontend/06-models-interfaces.md)
 7. [Component Loading Strategies](./frontend/07-loading-strategies.md)
+8. [API Configuration Service](./frontend/08-api-configuration.md)
 
 ### Backend (.NET Core/C#)
+
 1. [API Project Structure](./backend/01-api-structure.md)
 2. [Authentication and JWT](./backend/02-authentication-jwt.md)
 3. [Controllers and Endpoints](./backend/03-controllers-endpoints.md)
@@ -42,6 +45,7 @@ PetLink Application
 5. [Configuration and Startup](./backend/05-configuration-startup.md)
 
 ### Getting Started
+
 - [Development Environment Setup](./setup/development-environment.md)
 - [Running the Application](./setup/running-application.md)
 - [Testing Guide](./setup/testing-guide.md)
@@ -49,12 +53,14 @@ PetLink Application
 ## Quick Start
 
 1. Start the backend API:
+
    ```bash
    cd PetLink.API
    dotnet run
    ```
 
 2. Start the frontend application:
+
    ```bash
    cd petlink-ui
    npm start

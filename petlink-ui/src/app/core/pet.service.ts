@@ -2,15 +2,17 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Pet } from '../pets/pet.model';
-import { environment } from '../core/environment'; // Adjust the import path as necessary
+import { ApiConfigService } from './api-config.service';
 
 @Injectable({ providedIn: 'root' })
 export class PetService {
-  private apiUrl = environment.apiUrl + '/api/pets';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private apiConfig: ApiConfigService
+  ) {}
 
   getPets(): Observable<Pet[]> {
-    return this.http.get<Pet[]>(this.apiUrl);
+    return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list);
   }
 }
