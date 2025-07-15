@@ -2,14 +2,15 @@
 
 ## Overview
 
-Angular services provide reusable business logic and handle HTTP communication with backend APIs. The PetLink application uses two main services: `AuthService` and `PetService`, both implementing reactive patterns with RxJS Observables.
+Angular services provide reusable business logic and handle HTTP communication with backend APIs. The PetLink application uses three main services: `AuthService`, `PetService`, and `ApiConfigService`, all implementing reactive patterns with RxJS Observables and centralized API configuration.
 
 ## Service Architecture
 
 ### 1. Dependency Injection System
 ### 2. HTTP Client Integration  
 ### 3. Observable-based Communication
-### 4. Error Handling Strategies
+### 4. Centralized API Configuration
+### 5. Error Handling Strategies
 
 ## PetService (`pet.service.ts`)
 
@@ -20,16 +21,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Pet } from '../pets/pet.model';
-import { environment } from '../core/environment';
+import { ApiConfigService } from '../core/api-config.service';
 
 @Injectable({ providedIn: 'root' })
 export class PetService {
-  private apiUrl = environment.apiUrl + '/api/pets';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private apiConfig: ApiConfigService
+  ) {}
 
   getPets(): Observable<Pet[]> {
-    return this.http.get<Pet[]>(this.apiUrl);
+    return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list);
   }
 }
 ```
@@ -54,34 +57,48 @@ export class PetService {
 #### Constructor Injection
 
 ```typescript
-constructor(private http: HttpClient) {}
+constructor(
+  private http: HttpClient,
+  private apiConfig: ApiConfigService
+) {}
 ```
 
-**HttpClient Injection**:
+**Dependency Injection**:
 
-- Angular's built-in HTTP client service
-- Provides methods for REST API calls (GET, POST, PUT, DELETE)
-- Returns Observables for reactive programming
-- Handles request/response serialization
+- **HttpClient**: Angular's built-in HTTP client service
+- **ApiConfigService**: Centralized API endpoint configuration
+- Both services provide reactive programming patterns
+- Clean separation of concerns between HTTP and configuration logic
 
-#### API URL Configuration
+#### API Configuration Integration
 
 ```typescript
-private apiUrl = environment.apiUrl + '/api/pets';
+return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list);
 ```
 
-**Environment-based Configuration**:
+**Centralized Endpoint Management**:
 
-- Uses environment variables for API endpoints
-- Supports different URLs for development/production
-- Centralizes configuration management
-- Easier deployment across environments
+- Uses `ApiConfigService` for endpoint URLs instead of string concatenation
+- Provides type safety and IntelliSense support
+- Environment-aware configuration (dev/production)
+- Single source of truth for all API endpoints
+- Easy maintenance and updates
+
+**Benefits over Direct URL Construction**:
+
+```typescript
+// ❌ Old approach (error-prone)
+private apiUrl = environment.apiUrl + '/api/pets';
+
+// ✅ New approach (type-safe and centralized)
+this.apiConfig.endpoints.pets.list
+```
 
 #### `getPets()` Method
 
 ```typescript
 getPets(): Observable<Pet[]> {
-  return this.http.get<Pet[]>(this.apiUrl);
+  return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list);
 }
 ```
 
@@ -89,8 +106,9 @@ getPets(): Observable<Pet[]> {
 
 - **Return Type**: `Observable<Pet[]>` - Reactive stream of Pet array
 - **HTTP GET**: Fetches data from the backend API
-- **Type Safety**: Generic `<Pet[]>` ensures type checking
+- **Type Safety**: Generic `<Pet[]>` ensures compile-time type checking
 - **Lazy Execution**: HTTP call only made when subscribed
+- **Centralized URL**: Uses `ApiConfigService` for endpoint management
 
 ## AuthService HTTP Operations
 
@@ -98,7 +116,7 @@ The AuthService demonstrates POST operations and token management.
 
 ```typescript
 login(username: string, password: string) {
-  return this.http.post<{ token: string }>(environment.apiUrl + '/auth/login', { username, password });
+  return this.http.post<{ token: string }>(this.apiConfig.endpoints.auth.login, { username, password });
 }
 ```
 
@@ -106,9 +124,15 @@ login(username: string, password: string) {
 
 **Request Structure**:
 
-- **URL**: `environment.apiUrl + '/auth/login'`
+- **URL**: `this.apiConfig.endpoints.auth.login` - Centralized endpoint configuration
 - **Body**: `{ username, password }` - JSON payload
 - **Response Type**: `<{ token: string }>` - Expected response shape
+
+**API Configuration Benefits**:
+
+- **Type Safety**: Compile-time validation of endpoint usage
+- **Maintainability**: Update URLs in one place
+- **Environment Awareness**: Automatic dev/production URL switching
 
 **Automatic Features**:
 
@@ -116,11 +140,56 @@ login(username: string, password: string) {
 - Content-Type header set to application/json
 - Response deserialization to TypeScript object
 
+## ApiConfigService Integration
+
+### Centralized API Configuration
+
+The `ApiConfigService` provides a unified approach to API endpoint management:
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class ApiConfigService {
+  private readonly baseUrl = environment.apiUrl;
+
+  public readonly endpoints: ApiEndpoints = {
+    auth: {
+      login: `${this.baseUrl}/auth/login`,
+    },
+    pets: {
+      base: `${this.baseUrl}/api/pets`,
+      list: `${this.baseUrl}/api/pets`,
+    }
+  };
+}
+```
+
+### Benefits of Centralized Configuration
+
+**Type Safety**:
+```typescript
+// ✅ Compile-time validation
+this.apiConfig.endpoints.pets.list
+
+// ❌ Runtime errors possible
+environment.apiUrl + '/api/pets'
+```
+
+**Single Source of Truth**:
+- All API endpoints defined in one location
+- Easy to update and maintain
+- Consistent naming across the application
+
+**Environment Integration**:
+- Automatically uses environment-specific base URLs
+- No manual URL construction needed
+- Seamless dev/production switching
+
 ## Environment Configuration
 
 ### Environment Service Integration
 
 ```typescript
+// Still used by ApiConfigService for base URL
 import { environment } from '../core/environment';
 ```
 
@@ -129,15 +198,16 @@ import { environment } from '../core/environment';
 ```typescript
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:5000'
+  apiUrl: 'http://localhost:5119'  // Used by ApiConfigService
 };
 ```
 
-**Benefits**:
+**Enhanced Benefits with ApiConfigService**:
 
-- **Centralized Config**: Single source for environment settings
-- **Build-time Replacement**: Different configs for dev/prod builds
-- **Type Safety**: IntelliSense support for environment properties
+- **Centralized Base URL**: Environment provides only the base URL
+- **Service-level Configuration**: ApiConfigService handles all endpoint paths
+- **Type Safety**: TypeScript interfaces prevent endpoint errors
+- **Maintainability**: Change endpoints without touching multiple files
 
 ## Observable Pattern Deep Dive
 
@@ -209,6 +279,29 @@ export class AuthInterceptor implements HttpInterceptor {
 
 ## Error Handling Strategies
 
+### Component-Level Error Handling (PetListComponent)
+
+The `PetListComponent` demonstrates comprehensive error handling:
+
+```typescript
+ngOnInit(): void {
+  this.petService.getPets().subscribe({
+    next: pets => this.pets = pets,
+    error: err => {
+      console.error('Failed to fetch pets:', err);
+      alert('Could not load pets. Please try again later.');
+    }
+  });
+}
+```
+
+**Error Handling Features**:
+
+- **User-Friendly Messages**: Clear error message for users
+- **Development Logging**: Detailed error info in console
+- **Graceful Degradation**: App continues to function despite errors
+- **Immediate Feedback**: Alert provides instant user notification
+
 ### Service-Level Error Handling
 
 ```typescript
@@ -216,7 +309,7 @@ import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
 getPets(): Observable<Pet[]> {
-  return this.http.get<Pet[]>(this.apiUrl).pipe(
+  return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list).pipe(
     catchError(error => {
       console.error('Error fetching pets:', error);
       return throwError(() => new Error('Failed to load pets'));
@@ -225,15 +318,40 @@ getPets(): Observable<Pet[]> {
 }
 ```
 
-### Component-Level Error Handling
+### Enhanced Error Handling Patterns
+
+**Multi-Level Error Handling**:
 
 ```typescript
+// Service level - log and transform errors
+getPets(): Observable<Pet[]> {
+  return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list).pipe(
+    catchError(error => {
+      console.error('PetService: Error fetching pets:', error);
+      
+      // Transform HTTP errors to user-friendly messages
+      const userMessage = error.status === 0 
+        ? 'Unable to connect to server' 
+        : 'Failed to load pets';
+        
+      return throwError(() => new Error(userMessage));
+    })
+  );
+}
+
+// Component level - handle user experience
 ngOnInit(): void {
+  this.loading = true;
   this.petService.getPets().subscribe({
-    next: pets => this.pets = pets,
-    error: error => {
-      this.errorMessage = 'Unable to load pets. Please try again.';
+    next: pets => {
+      this.pets = pets;
       this.loading = false;
+    },
+    error: err => {
+      console.error('Failed to fetch pets:', err);
+      this.errorMessage = err.message || 'Could not load pets. Please try again later.';
+      this.loading = false;
+      // Could also show a toast notification instead of alert
     }
   });
 }
@@ -276,26 +394,52 @@ this.http.get<Pet[]>(this.apiUrl, httpOptions);
 ### Service-to-Service Communication
 
 ```typescript
-// AuthService can be injected into other services
+// Services can inject other services for enhanced functionality
 @Injectable({ providedIn: 'root' })
 export class PetService {
   constructor(
     private http: HttpClient,
-    private auth: AuthService  // Service dependency
+    private apiConfig: ApiConfigService,  // API configuration
+    private auth: AuthService             // Optional: for user context
   ) {}
 }
 ```
 
-### Component-Service Communication
+### Modern Service Architecture
 
 ```mermaid
 graph TD
-    A[Component] -->|calls method| B[Service]
-    B -->|returns Observable| A
-    B -->|HTTP request| C[Backend API]
-    C -->|JSON response| B
-    A -->|subscribes to| D[Observable]
-    D -->|emits data| A
+    A[Component] -->|subscribes to| B[PetService]
+    B -->|uses endpoints from| C[ApiConfigService]
+    B -->|HTTP request via| D[HttpClient]
+    D -->|request to| E[Backend API]
+    E -->|JSON response| D
+    D -->|Observable data| B
+    B -->|emits data| A
+    C -->|provides URLs| B
+```
+
+### Component-Service Communication
+
+The enhanced communication pattern with ApiConfigService:
+
+```typescript
+// Component usage remains simple
+export class PetListComponent implements OnInit {
+  pets: Pet[] = [];
+
+  constructor(private petService: PetService) {}
+
+  ngOnInit(): void {
+    this.petService.getPets().subscribe({
+      next: pets => this.pets = pets,
+      error: err => {
+        console.error('Failed to fetch pets:', err);
+        alert('Could not load pets. Please try again later.');
+      }
+    });
+  }
+}
 ```
 
 ## Best Practices Implemented
@@ -303,27 +447,39 @@ graph TD
 ### 1. Single Responsibility Principle
 
 - **AuthService**: Handles only authentication logic
-- **PetService**: Handles only pet data operations
+- **PetService**: Handles only pet data operations  
+- **ApiConfigService**: Manages only API endpoint configuration
 
 ### 2. Reactive Programming
 
 - All HTTP operations return Observables
 - Components subscribe to handle async responses
+- Error handling integrated into Observable streams
 
 ### 3. Type Safety
 
 - Generic types for HTTP responses: `<Pet[]>`, `<{token: string}>`
 - TypeScript interfaces define data contracts
+- ApiConfigService provides compile-time endpoint validation
 
-### 4. Environment Configuration
+### 4. Centralized Configuration
 
-- API URLs externalized to environment files
-- Different configurations for different environments
+- API endpoints managed by dedicated service
+- Environment-aware base URL configuration
+- Single source of truth for all API URLs
 
-### 5. Dependency Injection
+### 5. Comprehensive Error Handling
+
+- Multi-level error handling (service and component)
+- User-friendly error messages
+- Development-friendly error logging
+- Graceful degradation on failures
+
+### 6. Dependency Injection
 
 - Services properly injectable and reusable
 - Clean constructor-based dependency management
+- Loose coupling between services
 
 ## Testing Considerations
 
@@ -370,4 +526,5 @@ it('should fetch pets', () => {
 ## Next Steps
 
 - [Models and Interfaces](./06-models-interfaces.md)
+- [API Configuration Service](./08-api-configuration.md) - Deep dive into centralized endpoint management
 - [Backend API Structure](../backend/01-api-structure.md)

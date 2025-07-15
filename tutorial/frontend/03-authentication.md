@@ -11,6 +11,8 @@ The PetLink authentication system is built around JWT (JSON Web Tokens) and prov
 ### 3. AuthInterceptor - HTTP Request Enhancement
 ### 4. LoginComponent - User Interface
 
+**Note**: The authentication system integrates with the centralized [API Configuration Service](./08-api-configuration.md) for endpoint management.
+
 ## AuthService (`auth.service.ts`)
 
 The central service that handles all authentication operations.
@@ -19,16 +21,20 @@ The central service that handles all authentication operations.
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { environment } from '../core/environment';
+import { ApiConfigService } from './api-config.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private tokenKey = 'jwtToken';
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient, 
+    private router: Router,
+    private apiConfig: ApiConfigService
+  ) {}
 
   login(username: string, password: string) {
-    return this.http.post<{ token: string }>(environment.apiUrl + '/auth/login', { username, password });
+    return this.http.post<{ token: string }>(this.apiConfig.endpoints.auth.login, { username, password });
   }
 
   storeToken(token: string) {
@@ -57,9 +63,13 @@ export class AuthService {
 **Purpose**: Authenticates user credentials with the backend API
 
 **Process**:
-1. Sends POST request to `/auth/login` endpoint
-2. Returns Observable with JWT token response
-3. Handles authentication validation server-side
+
+1. Uses centralized API configuration to get login endpoint
+2. Sends POST request to the login endpoint via `ApiConfigService`
+3. Returns Observable with JWT token response
+4. Handles authentication validation server-side
+
+**API Integration**: Uses `this.apiConfig.endpoints.auth.login` from centralized configuration
 
 **Return Type**: `Observable<{ token: string }>`
 
@@ -68,6 +78,7 @@ export class AuthService {
 **Purpose**: Securely stores JWT token in browser's localStorage
 
 **Security Considerations**:
+
 - Uses consistent token key (`jwtToken`)
 - localStorage persists across browser sessions
 - Token available for HTTP interceptor usage
@@ -77,6 +88,7 @@ export class AuthService {
 **Purpose**: Retrieves stored JWT token for API requests
 
 **Usage**:
+
 - Called by HTTP interceptor
 - Used for authentication state checking
 - Returns null if no token exists
@@ -88,6 +100,7 @@ export class AuthService {
 **Logic**: Uses double negation (`!!`) to convert token existence to boolean
 
 **Use Cases**:
+
 - Route guard validation
 - UI conditional rendering
 - Component logic decisions
@@ -97,6 +110,7 @@ export class AuthService {
 **Purpose**: Clears authentication state and redirects to login
 
 **Process**:
+
 1. Removes token from localStorage
 2. Navigates user back to login page
 3. Ensures clean logout state
@@ -109,15 +123,11 @@ Provides the user interface for authentication.
 import { Component } from '@angular/core';
 import { AuthService } from '../core/auth.service';
 import { Router } from '@angular/router';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
+  standalone: false,
   templateUrl: './login.component.html',
-  imports: [MatFormFieldModule, MatInputModule, FormsModule],
 })
 export class LoginComponent {
   username = '';
@@ -139,11 +149,19 @@ export class LoginComponent {
 
 ### Component Features
 
-#### Standalone Component Architecture
+#### Module-Based Architecture
 
-- **Self-contained**: Imports its own dependencies
-- **Material Design**: Uses Angular Material for UI components
-- **Form Handling**: Implements two-way data binding with FormsModule
+- **Declared Component**: Part of the main application module (`app.module.ts`)
+- **Focused Responsibility**: Handles only UI logic and user interaction
+- **Service Integration**: Uses `AuthService` for all authentication operations
+
+#### API Configuration Integration
+
+The `LoginComponent` **indirectly** benefits from the centralized API configuration:
+
+- **No Direct Dependency**: Component doesn't import `ApiConfigService`
+- **Through AuthService**: Benefits from centralized endpoints via `AuthService`
+- **Clean Architecture**: Maintains separation between UI and API concerns
 
 #### Login Flow
 
@@ -202,24 +220,125 @@ export class AuthGuard implements CanActivate {
 
 ## AuthInterceptor (`auth.interceptor.ts`)
 
-Automatically adds JWT token to HTTP requests.
+Automatically adds JWT token to HTTP requests through Angular's interceptor chain system.
+
+```typescript
+import { Injectable } from '@angular/core';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { AuthService } from './auth.service';
+
+@Injectable()
+export class AuthInterceptor implements HttpInterceptor {
+  constructor(private authService: AuthService) {}
+
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const token = this.authService.getToken();
+    if (token) {
+      req = req.clone({
+        setHeaders: { Authorization: `Bearer ${token}` }
+      });
+    }
+    return next.handle(req);
+  }
+}
+```
+
+### How AuthInterceptor is Wired into the Application
+
+#### Angular's HTTP Interceptor Chain System
+
+The `AuthInterceptor` is registered in `app.module.ts` through Angular's built-in interceptor system:
+
+```typescript
+// app.module.ts
+providers: [
+  { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+]
+```
+
+**Key Configuration Details**:
+- `HTTP_INTERCEPTORS`: Angular's injection token for HTTP interceptors
+- `multi: true`: Allows multiple interceptors to be registered in a chain
+- **Automatic Integration**: Angular applies this to ALL HTTP requests made with `HttpClient`
+
+#### Automatic Request Interception
+
+When ANY service makes an HTTP request using `HttpClient`, Angular automatically:
+
+1. **Intercepts the Request**: Before sending to the server
+2. **Runs AuthInterceptor**: Calls the `intercept()` method
+3. **Adds Authorization Header**: If a valid token exists
+4. **Continues Chain**: Passes to next interceptor or makes the actual HTTP call
+
+#### Visual Flow
+
+```mermaid
+graph TD
+    A[Service calls HttpClient] --> B[Angular HTTP Interceptor Chain]
+    B --> C[AuthInterceptor intercept method]
+    C --> D{Token exists?}
+    D -->|Yes| E[Clone request + add Bearer token]
+    D -->|No| F[Pass request unchanged]
+    E --> G[Continue to HTTP call]
+    F --> G
+    G --> H[Backend API]
+    H --> I[Response back through chain]
+    I --> J[Service receives response]
+```
+
+#### Example in Action
+
+When your services make requests, the interceptor works transparently:
+
+```typescript
+// PetService makes this call
+this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list)
+
+// AuthInterceptor AUTOMATICALLY intercepts and modifies it to:
+// GET /api/pets
+// Headers: {
+//   "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+// }
+```
 
 ### Key Responsibilities
 
 1. **Token Injection**: Adds Authorization header to outgoing requests
-2. **API Targeting**: Only affects requests to the backend API
-3. **Automatic Handling**: No manual token management in components
+2. **Dynamic Token Retrieval**: Gets fresh token from AuthService for each request
+3. **Automatic Handling**: No manual token management needed in services
+4. **Transparent Operation**: Services don't need to know about authentication headers
 
-### Typical Implementation Pattern
+### Benefits of This Architecture
 
+**Automatic Application**:
+- No need to manually add headers in every service method
+- Consistent authentication across all HTTP requests
+- Zero code changes needed in individual services
+
+**Centralized Logic**:
+- All authentication header logic in one place
+- Easy to modify token handling globally
+- Can add logging, error handling, or request transformation
+
+**Clean Service Code**:
 ```typescript
-// Intercepts HTTP requests and adds Bearer token
-req = req.clone({
-  setHeaders: {
-    Authorization: `Bearer ${token}`
-  }
-});
+// Services focus on business logic, not authentication
+getPets(): Observable<Pet[]> {
+  return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list);
+  // ↑ AuthInterceptor automatically adds token if user is authenticated
+}
 ```
+
+**Testing and Verification**:
+To verify the interceptor is working:
+1. Login to the application
+2. Open browser DevTools → Network tab
+3. Navigate to pets page (triggers HTTP requests)
+4. Check request headers - you should see:
+   ```
+   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   ```
 
 ## Authentication Flow
 
@@ -293,6 +412,30 @@ sequenceDiagram
 4. **Security First**: Guards protect sensitive routes
 5. **Token Management**: Centralized token storage and retrieval
 6. **User Experience**: Automatic redirects and state management
+7. **API Configuration**: Uses centralized endpoint management for maintainability
+
+## API Integration
+
+The AuthService integrates with the [API Configuration Service](./08-api-configuration.md) to provide:
+
+- **Centralized Endpoints**: All authentication URLs managed in one place
+- **Environment Awareness**: Automatic dev/production URL switching
+- **Type Safety**: Compile-time validation of endpoint usage
+- **Easy Maintenance**: Update authentication endpoints without code changes
+
+### Migration Benefits
+
+**Before** (direct URL concatenation):
+
+```typescript
+this.http.post(environment.apiUrl + '/auth/login', credentials)
+```
+
+**After** (centralized configuration):
+
+```typescript
+this.http.post(this.apiConfig.endpoints.auth.login, credentials)
+```
 
 ## Demo Credentials
 
@@ -305,3 +448,4 @@ For development and testing:
 
 - [Pet Management Components](./04-pet-management.md)
 - [Services and HTTP Communication](./05-services-http.md)
+- [API Configuration Service](./08-api-configuration.md) - Learn about centralized endpoint management

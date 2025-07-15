@@ -17,7 +17,13 @@ export class PetListComponent implements OnInit {
   constructor(private petService: PetService) {}
 
   ngOnInit(): void {
-    this.petService.getPets().subscribe(pets => this.pets = pets);
+    this.petService.getPets().subscribe({
+      next: pets => this.pets = pets,
+      error: err => {
+      console.error('Failed to fetch pets:', err);
+      alert('Could not load pets. Please try again later.');
+      }
+    });
   }
 }
 // export class AppComponent {}

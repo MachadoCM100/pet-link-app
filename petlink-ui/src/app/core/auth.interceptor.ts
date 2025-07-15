@@ -7,6 +7,8 @@ import { AuthService } from './auth.service';
 export class AuthInterceptor implements HttpInterceptor {
   constructor(private authService: AuthService) {}
 
+  // Intercept HTTP requests to add the Authorization header
+  // if the user is authenticated
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.authService.getToken();
     if (token) {
