@@ -32,6 +32,7 @@ PetLink Application
 4. [Pet Management Components](./frontend/04-pet-management.md)
 5. [Services and HTTP Communication](./frontend/05-services-http.md)
 6. [Models and Interfaces](./frontend/06-models-interfaces.md)
+7. [Component Loading Strategies](./frontend/07-loading-strategies.md)
 
 ### Backend (.NET Core/C#)
 1. [API Project Structure](./backend/01-api-structure.md)

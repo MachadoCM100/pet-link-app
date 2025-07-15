@@ -16,14 +16,17 @@ The main component responsible for displaying the list of available pets.
 
 ```typescript
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatListModule } from '@angular/material/list';
 import { PetService } from '../core/pet.service';
 import { Pet } from './pet.model';
 
 @Component({
   selector: 'app-pet-list',
-  standalone: false,
+  standalone: true,
   templateUrl: './pet-list.component.html',
   styleUrls: ['./pet-list.component.scss'],
+  imports: [CommonModule, MatListModule]
 })
 export class PetListComponent implements OnInit {
   pets: Pet[] = [];
@@ -264,3 +267,21 @@ ngOnInit(): void {
 
 - [Services and HTTP Communication](./05-services-http.md)
 - [Models and Interfaces](./06-models-interfaces.md)
+
+### Standalone Component Architecture
+
+**Why Standalone for PetListComponent?**
+
+- **Lazy Loading**: Component is loaded dynamically, so it needs to be self-contained
+- **Modular Dependencies**: Imports only what it needs (`CommonModule`, `MatListModule`)
+- **Easy Testing**: Self-contained component is easier to test in isolation
+- **Performance**: Smaller bundle chunks when lazy loaded
+
+**Required Imports**:
+
+```typescript
+imports: [CommonModule, MatListModule]
+```
+
+- **`CommonModule`**: Provides `*ngFor`, `*ngIf` directives used in template
+- **`MatListModule`**: Angular Material list components (`mat-list`, `mat-list-item`)

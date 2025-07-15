@@ -50,6 +50,7 @@ export class AppComponent {}
 ```
 
 **Key Features:**
+
 - **Selector**: `app-root` - This is the HTML tag used in `index.html`
 - **Template**: Contains the main layout with router outlet
 - **Router Outlet**: Displays different components based on the current route
@@ -59,6 +60,7 @@ export class AppComponent {}
 The main module that declares components and imports necessary modules.
 
 **Key Responsibilities:**
+
 - Declares all components that are not standalone
 - Imports required Angular modules
 - Configures providers for services
@@ -75,18 +77,21 @@ Contains shared services, guards, and utilities:
 
 ## Module vs Standalone Components
 
-The application uses a hybrid approach:
+The application uses a hybrid approach based on loading strategy:
 
 ### Traditional Module-based Components
-- `PetListComponent` - Uses the traditional module approach
-- Declared in `AppModule`
-- Good for components with complex dependencies
+
+- `LoginComponent` - Uses the traditional module approach
+- Declared in `AppModule` for eager loading
+- Shares module imports with other eagerly loaded components
+- Good for critical path components that need immediate availability
 
 ### Standalone Components
 
-- `LoginComponent` - Uses the standalone approach
-- Imports its own dependencies
+- `PetListComponent` - Uses the standalone approach
+- Imports its own dependencies (`CommonModule`, `MatListModule`)
 - Easier to test and more modular
+- Perfect for lazy-loaded components
 
 ## Angular Features Used
 
@@ -125,6 +130,7 @@ this.auth.login(username, password).subscribe({
 ```
 
 ### 3. Routing
+
 Navigation between different views using Angular Router:
 
 ```typescript
@@ -132,6 +138,7 @@ this.router.navigate(['/pets']);
 ```
 
 ### 4. Template Binding
+
 Two-way data binding with forms:
 
 ```typescript

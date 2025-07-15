@@ -11,13 +11,13 @@ The PetLink application uses Angular Router for navigation between different vie
 ```typescript
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { PetListComponent } from './pets/pet-list.component';
+import { LoginComponent } from './login/login.component';
 import { AuthGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
-  { path: 'login', loadComponent: () => import('./login/login.component').then(m => m.LoginComponent) },
-  { path: 'pets', component: PetListComponent, canActivate: [AuthGuard] },
+  { path: 'login', component: LoginComponent },  // Eager loading for critical path
+  { path: 'pets', loadComponent: () => import('./pets/pet-list.component').then(m => m.PetListComponent), canActivate: [AuthGuard] },  // Lazy load authenticated content
 ];
 ```
 
@@ -37,39 +37,47 @@ export const routes: Routes = [
 - `redirectTo: 'login'` - Redirects to the login route
 - `pathMatch: 'full'` - Only matches if the entire URL is empty
 
-### 2. Login Route (Lazy Loading)
+### 2. Login Route (Eager Loading)
 
 ```typescript
-{ path: 'login', loadComponent: () => import('./login/login.component').then(m => m.LoginComponent) }
+{ path: 'login', component: LoginComponent }
 ```
 
 **Purpose**: Displays the login form for user authentication
 
 **Key Features**:
 
-- **Lazy Loading**: Component is loaded only when needed
-- **Standalone Component**: Uses dynamic import for better performance
+- **Eager Loading**: Component is loaded with the main application bundle
+- **Module Component**: Traditional component declared in app.module.ts
 - **No Guards**: Accessible to unauthenticated users
+- **Critical Path**: Optimized for immediate access since it's the default route
 
-**Benefits of Lazy Loading**:
+**Benefits of Eager Loading for Login**:
 
-- Smaller initial bundle size
-- Faster application startup
-- Better performance for large applications
+- No additional HTTP request needed
+- Instant display when redirected from root route
+- Better user experience for the critical authentication flow
 
-### 3. Protected Pets Route
+### 3. Protected Pets Route (Lazy Loading)
 
 ```typescript
-{ path: 'pets', component: PetListComponent, canActivate: [AuthGuard] }
+{ path: 'pets', loadComponent: () => import('./pets/pet-list.component').then(m => m.PetListComponent), canActivate: [AuthGuard] }
 ```
 
 **Purpose**: Displays the list of pets (protected route)
 
 **Key Features**:
 
+- **Lazy Loading**: Component is loaded only when accessed
+- **Standalone Component**: Self-contained with its own imports
 - **Route Protection**: Requires authentication via `AuthGuard`
-- **Module Component**: Traditional component declared in a module
-- **Authorization**: Only accessible to authenticated users
+- **Post-Authentication**: Only needed after successful login
+
+**Benefits of Lazy Loading for Pets**:
+
+- Smaller initial bundle size
+- Only downloaded after authentication
+- Better performance for the critical login path
 
 ## Route Guards
 
@@ -158,14 +166,22 @@ template: `
 ### Lazy Loading Benefits
 
 ```typescript
-loadComponent: () => import('./login/login.component').then(m => m.LoginComponent)
+loadComponent: () => import('./pets/pet-list.component').then(m => m.PetListComponent)
 ```
 
 **Advantages**:
 
 - **Code Splitting**: Component code is in a separate bundle
 - **On-Demand Loading**: Only loaded when route is accessed
-- **Performance**: Faster initial application load
+- **Performance**: Reduces initial application bundle size
+- **Post-Authentication Optimization**: Delays non-critical component loading
+
+**When to Use Lazy Loading**:
+
+- Components accessed after authentication
+- Large feature modules with heavy dependencies
+- Optional or infrequently used components
+- Administrative or specialized functionality
 
 ### Route Protection Strategy
 
@@ -178,10 +194,11 @@ The application implements a security-first approach:
 ## Best Practices Implemented
 
 1. **Centralized Routing**: All routes defined in one module
-2. **Lazy Loading**: Non-critical components loaded on-demand
+2. **Strategic Lazy Loading**: Critical path components (login) eager loaded, optional components (pets) lazy loaded
 3. **Route Protection**: Guards prevent unauthorized access
 4. **Clear URLs**: Semantic route paths (`/login`, `/pets`)
 5. **Redirect Strategy**: Logical default navigation
+6. **Performance Optimization**: Lazy loading for post-authentication features only
 
 ## Next Steps
 
