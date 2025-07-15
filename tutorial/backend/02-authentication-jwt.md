@@ -2,52 +2,152 @@
 
 ## Overview
 
-The PetLink API implements JWT (JSON Web Token) based authentication for secure, stateless user authentication. This system provides token-based security that works seamlessly with the Angular frontend.
+The PetLink API implements JWT (JSON Web Token) based authentication using a **service layer architecture**. This provides secure, stateless user authentication that works seamlessly with the Angular frontend while maintaining clean separation of concerns.
 
 ## JWT Authentication Architecture
 
-### 1. Token Generation - Login Process
-### 2. Token Validation - Request Authentication
-### 3. Security Configuration - Middleware Setup
-### 4. Authorization - Protected Endpoints
+### 1. Service Layer Design
 
-## AuthController (`AuthController.cs`)
+- **IAuthService**: Interface defining authentication contracts
+- **AuthService**: Business logic implementation for authentication
+- **AuthController**: HTTP endpoint handling (delegates to service)
 
-Handles user authentication and JWT token generation.
+### 2. Token Generation - Login Process
+### 3. Token Validation - Request Authentication  
+### 4. Security Configuration - Middleware Setup
+### 5. Authorization - Protected Endpoints
+
+## Authentication Service Layer
+
+### IAuthService Interface (`Interfaces/IAuthService.cs`)
+
+Defines the authentication service contract:
 
 ```csharp
-using Microsoft.AspNetCore.Mvc;
+using PetLink.API.Models;
+
+namespace PetLink.API.Interfaces
+{
+    public interface IAuthService
+    {
+        Task<LoginResponse?> AuthenticateAsync(LoginRequest request);
+        Task<bool> ValidateUserAsync(string username, string password);
+        string GenerateJwtToken(string username);
+    }
+}
+```
+
+**Key Methods**:
+
+- **AuthenticateAsync**: Handles complete authentication flow
+- **ValidateUserAsync**: Validates user credentials  
+- **GenerateJwtToken**: Creates JWT tokens for authenticated users
+
+### AuthService Implementation (`Services/AuthService.cs`)
+
+Contains all authentication business logic:
+
+```csharp
 using Microsoft.IdentityModel.Tokens;
+using PetLink.API.Interfaces;
+using PetLink.API.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+
+namespace PetLink.API.Services
+{
+    public class AuthService : IAuthService
+    {
+        // Demo credentials - in a real application, this would come from a database
+        private const string DemoUsername = "admin";
+        private const string DemoPassword = "password";
+        private const string SecretKey = "this is my custom Secret key for authentication";
+
+        public Task<LoginResponse?> AuthenticateAsync(LoginRequest request)
+        {
+            if (!ValidateUserAsync(request.Username, request.Password).Result)
+                return Task.FromResult<LoginResponse?>(null);
+
+            var token = GenerateJwtToken(request.Username);
+            return Task.FromResult<LoginResponse?>(new LoginResponse { Token = token });
+        }
+
+        public Task<bool> ValidateUserAsync(string username, string password)
+        {
+            // In a real application, this would validate against a database
+            // with proper password hashing
+            var isValid = username == DemoUsername && password == DemoPassword;
+            return Task.FromResult(isValid);
+        }
+
+        public string GenerateJwtToken(string username)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(SecretKey);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[] 
+                { 
+                    new Claim(ClaimTypes.Name, username),
+                    new Claim(ClaimTypes.NameIdentifier, username)
+                }),
+                Expires = DateTime.UtcNow.AddHours(1),
+                SigningCredentials = new SigningCredentials(
+                    new SymmetricSecurityKey(key), 
+                    SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+    }
+}
+```
+
+## AuthController (`Controllers/AuthController.cs`)
+
+Handles HTTP requests and delegates to the authentication service:
+
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using PetLink.API.Interfaces;
+using PetLink.API.Models;
 
 [ApiController]
 [Route("auth")]
 public class AuthController : ControllerBase
 {
-    private const string DemoUsername = "admin";
-    private const string DemoPassword = "password";
-    private const string SecretKey = "this is my custom Secret key for authentication";
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService)
+    {
+        _authService = authService;
+    }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        Console.WriteLine($"Login attempt: Username={request.Username}, Password={request.Password}");
-
-        if (request.Username != DemoUsername || request.Password != DemoPassword)
-            return Unauthorized();
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(SecretKey);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
+        try
         {
-            Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, request.Username) }),
-            Expires = DateTime.UtcNow.AddHours(1),
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key), 
-                SecurityAlgorithms.HmacSha256Signature)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            Console.WriteLine($"Login attempt: Username={request.Username}, Password={request.Password}");
+
+            var result = await _authService.AuthenticateAsync(request);
+            if (result == null)
+                return Unauthorized(new { message = "Invalid username or password." });
+
+            return Ok(new { token = result.Token });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred during authentication.", details = ex.Message });
+        }
+    }
+}
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);

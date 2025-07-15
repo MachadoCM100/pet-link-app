@@ -43,6 +43,8 @@ PetLink Application
 3. [Controllers and Endpoints](./backend/03-controllers-endpoints.md)
 4. [Security and CORS](./backend/04-security-cors.md)
 5. [Configuration and Startup](./backend/05-configuration-startup.md)
+6. [Service Layer Architecture](./backend/06-service-layer-architecture.md)
+7. [Models and DTOs](./backend/07-models-dtos.md)
 
 ### Getting Started
 

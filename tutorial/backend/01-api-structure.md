@@ -15,6 +15,15 @@ PetLink.API/
 ├── Controllers/                 # API endpoint controllers
 │   ├── AuthController.cs        # Authentication endpoints
 │   └── PetsController.cs        # Pet management endpoints
+├── Services/                    # Business logic implementation
+│   ├── AuthService.cs           # Authentication business logic
+│   └── PetService.cs           # Pet management business logic
+├── Interfaces/                  # Service contracts and abstractions
+│   ├── IAuthService.cs         # Authentication service interface
+│   └── IPetService.cs          # Pet service interface
+├── Models/                      # Data transfer objects and entities
+│   ├── Pet.cs                  # Pet entity model
+│   └── AuthModels.cs           # Authentication DTOs
 ├── Properties/
 │   └── launchSettings.json      # Development server configuration
 ├── bin/                         # Compiled output
@@ -77,6 +86,8 @@ The main entry point that configures services and the request pipeline.
 
 ```csharp
 using Microsoft.IdentityModel.Tokens;
+using PetLink.API.Interfaces;
+using PetLink.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var key = "this is my custom Secret key for authentication"; // For demo only
@@ -93,6 +104,10 @@ builder.Services.AddAuthentication("Bearer")
             IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(key))
         };
     });
+
+// Register business services
+builder.Services.AddScoped<IPetService, PetService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
 builder.Services.AddAuthorization();
@@ -147,6 +162,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 ```csharp
 builder.Services.AddAuthentication("Bearer")
+builder.Services.AddScoped<IPetService, PetService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddControllers();
 builder.Services.AddAuthorization();
 ```
@@ -154,10 +171,11 @@ builder.Services.AddAuthorization();
 **Dependency Injection Container**:
 
 - **AddAuthentication**: Registers authentication services
+- **AddScoped**: Registers business services with per-request lifetime
 - **AddControllers**: Enables MVC controller support
 - **AddAuthorization**: Adds authorization policy services
 
-#### Middleware Pipeline
+#### Request Pipeline
 
 ```csharp
 app.UseCors("LocalhostPolicy");
@@ -303,21 +321,23 @@ Contains intermediate build files:
 
 ## Architecture Patterns
 
+### Service Layer Pattern
+
+**Business Logic Separation**:
+
+- Controllers handle HTTP requests/responses only
+- Services contain business logic and data operations
+- Interfaces define contracts for service implementations
+- Dependency injection manages service lifetimes
+
 ### Dependency Injection
 
 **Built-in Container**:
 
 - Service registration in Program.cs
-- Constructor injection in controllers
+- Constructor injection in controllers and services
 - Lifetime management (Singleton, Scoped, Transient)
-
-### Configuration Pattern
-
-**IConfiguration Integration**:
-
-- Multiple configuration sources
-- Type-safe configuration binding
-- Environment-specific overrides
+- Interface-based dependencies for testability
 
 ### Middleware Pipeline
 
@@ -327,6 +347,23 @@ Contains intermediate build files:
 - Cross-cutting concerns (CORS, Auth, Logging)
 - Custom middleware support
 
+## Service Layer Implementation
+
+### Business Services
+
+The application implements a clean service layer architecture:
+
+- **IPetService/PetService**: Pet management business logic
+- **IAuthService/AuthService**: Authentication and JWT token generation
+- **Dependency Injection**: Services registered as scoped dependencies
+- **Controller Integration**: Controllers depend on service interfaces
+
+### Models and DTOs
+
+- **Pet.cs**: Core pet entity with properties (Id, Name, Type, Adopted)
+- **AuthModels.cs**: Authentication data transfer objects (LoginRequest, LoginResponse, User)
+- **Type Safety**: Strong typing throughout the application
+
 ## Security Implementation
 
 ### JWT Authentication
@@ -334,6 +371,7 @@ Contains intermediate build files:
 - Token-based authentication
 - Stateless security model
 - Bearer token scheme
+- Service-based token generation
 
 ### CORS Configuration
 
@@ -344,12 +382,15 @@ Contains intermediate build files:
 ## Best Practices Implemented
 
 1. **Separation of Concerns**: Controllers handle HTTP, services handle business logic
-2. **Configuration Management**: Environment-specific settings
-3. **Security First**: Authentication and authorization middleware
-4. **RESTful Design**: Standard HTTP patterns and status codes
-5. **Development Tools**: Swagger/OpenAPI for API documentation
+2. **Interface Segregation**: Service contracts defined through interfaces  
+3. **Dependency Injection**: Loose coupling through constructor injection
+4. **Configuration Management**: Environment-specific settings
+5. **Security First**: Authentication and authorization middleware
+6. **RESTful Design**: Standard HTTP patterns and status codes
+7. **Error Handling**: Structured error responses with proper HTTP status codes
 
 ## Next Steps
 
 - [Authentication and JWT](./02-authentication-jwt.md)
 - [Controllers and Endpoints](./03-controllers-endpoints.md)
+- [Service Layer Architecture](./06-service-layer-architecture.md)

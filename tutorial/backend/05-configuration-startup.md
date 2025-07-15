@@ -12,6 +12,8 @@ The application uses the minimal hosting model introduced in .NET 6 and enhanced
 
 ```csharp
 using Microsoft.IdentityModel.Tokens;
+using PetLink.API.Interfaces;
+using PetLink.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var key = "this is my custom Secret key for authentication"; // For demo only
@@ -28,6 +30,10 @@ builder.Services.AddAuthentication("Bearer")
             IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(key))
         };
     });
+
+// Register business services
+builder.Services.AddScoped<IPetService, PetService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
 builder.Services.AddAuthorization();
@@ -144,6 +150,37 @@ builder.Services.AddOpenApi();
 **Development Tool**: API documentation and testing interface
 
 **Automatic Generation**: Creates API docs from controller metadata
+
+### Business Service Registration
+
+```csharp
+builder.Services.AddScoped<IPetService, PetService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+```
+
+**Service Layer Pattern**: Register interfaces with implementations
+
+**Scoped Lifetime**: One instance per HTTP request
+
+**Benefits**:
+- Dependency injection support
+- Interface-based architecture
+- Easy testing with mocks
+- Loose coupling between layers
+
+**Usage in Controllers**:
+
+```csharp
+public class PetsController : ControllerBase
+{
+    private readonly IPetService _petService;
+
+    public PetsController(IPetService petService)
+    {
+        _petService = petService; // Automatically injected
+    }
+}
+```
 
 ### CORS Service Configuration
 

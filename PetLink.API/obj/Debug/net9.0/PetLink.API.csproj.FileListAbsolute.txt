@@ -39,14 +39,8 @@ C:\devEnv\PetLink.API\obj\Debug\net9.0\refint\PetLink.API.dll
 C:\devEnv\PetLink.API\obj\Debug\net9.0\PetLink.API.pdb
 C:\devEnv\PetLink.API\obj\Debug\net9.0\PetLink.API.genruntimeconfig.cache
 C:\devEnv\PetLink.API\obj\Debug\net9.0\ref\PetLink.API.dll
-C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\appsettings.Development.json
-C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\appsettings.json
-C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.staticwebassets.endpoints.json
 C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.exe
-C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.deps.json
-C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.runtimeconfig.json
 C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.dll
-C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.pdb
 C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\Microsoft.AspNetCore.OpenApi.dll
 C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
@@ -57,6 +51,12 @@ C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols
 C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\Microsoft.OpenApi.dll
 C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\appsettings.Development.json
+C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\appsettings.json
+C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.staticwebassets.endpoints.json
+C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.deps.json
+C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.runtimeconfig.json
+C:\devEnv\PetLink\PetLink.API\bin\Debug\net9.0\PetLink.API.pdb
 C:\devEnv\PetLink\PetLink.API\obj\Debug\net9.0\PetLink.API.csproj.AssemblyReference.cache
 C:\devEnv\PetLink\PetLink.API\obj\Debug\net9.0\PetLink.API.GeneratedMSBuildEditorConfig.editorconfig
 C:\devEnv\PetLink\PetLink.API\obj\Debug\net9.0\PetLink.API.AssemblyInfoInputs.cache

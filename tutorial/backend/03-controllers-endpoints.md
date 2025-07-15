@@ -2,52 +2,63 @@
 
 ## Overview
 
-The PetLink API uses ASP.NET Core controllers to handle HTTP requests and implement RESTful endpoints. The application includes two main controllers: `AuthController` for authentication and `PetsController` for pet data management.
+The PetLink API uses ASP.NET Core controllers with a **service layer architecture** to handle HTTP requests and implement RESTful endpoints. Controllers focus purely on HTTP concerns while delegating business logic to dedicated services.
 
 ## Controller Architecture
 
-### 1. RESTful Design Patterns
-### 2. HTTP Verb Mapping
-### 3. Request/Response Handling
-### 4. Authorization Integration
+### 1. Service Layer Integration
+- Controllers inject and use service interfaces
+- Business logic separated into service classes
+- Clean separation of HTTP and business concerns
+
+### 2. RESTful Design Patterns
+### 3. HTTP Verb Mapping  
+### 4. Request/Response Handling
+### 5. Authorization Integration
+### 6. Error Handling and Validation
 
 ## AuthController - Authentication Endpoints
 
-Handles user authentication and token generation.
+Handles authentication HTTP requests and delegates to `IAuthService`.
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+using PetLink.API.Interfaces;
+using PetLink.API.Models;
 
 [ApiController]
 [Route("auth")]
 public class AuthController : ControllerBase
 {
-    private const string DemoUsername = "admin";
-    private const string DemoPassword = "password";
-    private const string SecretKey = "this is my custom Secret key for authentication";
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService)
+    {
+        _authService = authService;
+    }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        Console.WriteLine($"Login attempt: Username={request.Username}, Password={request.Password}");
-
-        if (request.Username != DemoUsername || request.Password != DemoPassword)
-            return Unauthorized();
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(SecretKey);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
+        try
         {
-            Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, request.Username) }),
-            Expires = DateTime.UtcNow.AddHours(1),
-            SigningCredentials = new SigningCredentials(
-                new SymmetricSecurityKey(key), 
-                SecurityAlgorithms.HmacSha256Signature)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            Console.WriteLine($"Login attempt: Username={request.Username}, Password={request.Password}");
+
+            var result = await _authService.AuthenticateAsync(request);
+            if (result == null)
+                return Unauthorized(new { message = "Invalid username or password." });
+
+            return Ok(new { token = result.Token });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred during authentication.", details = ex.Message });
+        }
+    }
+}
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -127,65 +138,234 @@ return Unauthorized();
 
 ## PetsController - Data Endpoints
 
-Manages pet-related data operations with authorization protection.
+Manages pet-related HTTP operations and delegates business logic to `IPetService`.
 
 ```csharp
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PetLink.API.Interfaces;
+using PetLink.API.Models;
 
 [ApiController]
 [Route("api/pets")]
 [Authorize]
 public class PetsController : ControllerBase
 {
-    [HttpGet]
-    public IActionResult GetPets()
+    private readonly IPetService _petService;
+
+    public PetsController(IPetService petService)
     {
-        var pets = new[]
+        _petService = petService;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPets()
+    {
+        try
         {
-            new { Id = 1, Name = "Fluffy", Type = "Cat", Adopted = false },
-            new { Id = 2, Name = "Rover", Type = "Dog", Adopted = true }
-        };
-        return Ok(pets);
+            var pets = await _petService.GetAllPetsAsync();
+            return Ok(pets);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving pets.", details = ex.Message });
+        }
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetPet(int id)
+    {
+        try
+        {
+            var pet = await _petService.GetPetByIdAsync(id);
+            if (pet == null)
+                return NotFound(new { message = $"Pet with ID {id} not found." });
+
+            return Ok(pet);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving the pet.", details = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreatePet([FromBody] Pet pet)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var createdPet = await _petService.CreatePetAsync(pet);
+            return CreatedAtAction(nameof(GetPet), new { id = createdPet.Id }, createdPet);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while creating the pet.", details = ex.Message });
+        }
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdatePet(int id, [FromBody] Pet pet)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var updatedPet = await _petService.UpdatePetAsync(id, pet);
+            if (updatedPet == null)
+                return NotFound(new { message = $"Pet with ID {id} not found." });
+
+            return Ok(updatedPet);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while updating the pet.", details = ex.Message });
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeletePet(int id)
+    {
+        try
+        {
+            var deleted = await _petService.DeletePetAsync(id);
+            if (!deleted)
+                return NotFound(new { message = $"Pet with ID {id} not found." });
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while deleting the pet.", details = ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/adopt")]
+    public async Task<IActionResult> AdoptPet(int id)
+    {
+        try
+        {
+            var adopted = await _petService.AdoptPetAsync(id);
+            if (!adopted)
+                return NotFound(new { message = $"Pet with ID {id} not found." });
+
+            var pet = await _petService.GetPetByIdAsync(id);
+            return Ok(pet);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while adopting the pet.", details = ex.Message });
+        }
     }
 }
 ```
 
-### Authorization Protection
+### Service Integration Pattern
 
-#### `[Authorize]` Attribute
-
-```csharp
-[Authorize]
-public class PetsController : ControllerBase
-```
-
-**Scope**: Applied at controller level - protects all actions
-
-**Effect**: Requires valid JWT token for access
-
-**Response**: Returns 401 Unauthorized if no valid token
-
-#### Authentication Flow
-
-1. **Request**: Client sends request with Bearer token
-2. **Middleware**: JWT middleware validates token
-3. **Authorization**: [Authorize] attribute checks authentication
-4. **Access**: Grants or denies access to action method
-
-### Data Response Pattern
-
-#### Static Data Implementation
+#### Dependency Injection
 
 ```csharp
-var pets = new[]
+private readonly IPetService _petService;
+
+public PetsController(IPetService petService)
 {
-    new { Id = 1, Name = "Fluffy", Type = "Cat", Adopted = false },
-    new { Id = 2, Name = "Rover", Type = "Dog", Adopted = true }
-};
+    _petService = petService;
+}
 ```
 
-**Current Approach**: Hardcoded data for demo purposes
+**Benefits**:
+
+- **Separation of Concerns**: Controller handles HTTP, service handles business logic
+- **Testability**: Easy to mock service dependencies
+- **Maintainability**: Business logic centralized in services
+- **Flexibility**: Can swap service implementations
+
+#### Async Operations
+
+```csharp
+public async Task<IActionResult> GetPets()
+{
+    var pets = await _petService.GetAllPetsAsync();
+    return Ok(pets);
+}
+```
+
+**Pattern**: All service calls are asynchronous
+**Benefits**: Non-blocking I/O operations, better scalability
+
+### Complete CRUD Operations
+
+#### 1. GET /api/pets - Get All Pets
+
+```csharp
+[HttpGet]
+public async Task<IActionResult> GetPets()
+```
+
+**Purpose**: Retrieve all pets
+**Returns**: 200 OK with pet array
+**Authorization**: Required (JWT token)
+
+#### 2. GET /api/pets/{id} - Get Single Pet
+
+```csharp
+[HttpGet("{id}")]
+public async Task<IActionResult> GetPet(int id)
+```
+
+**Purpose**: Retrieve specific pet by ID
+**Returns**: 200 OK with pet object, or 404 Not Found
+**Authorization**: Required (JWT token)
+
+#### 3. POST /api/pets - Create New Pet
+
+```csharp
+[HttpPost]
+public async Task<IActionResult> CreatePet([FromBody] Pet pet)
+```
+
+**Purpose**: Create new pet
+**Returns**: 201 Created with location header and pet object
+**Authorization**: Required (JWT token)
+**Validation**: Model validation applied
+
+#### 4. PUT /api/pets/{id} - Update Pet
+
+```csharp
+[HttpPut("{id}")]
+public async Task<IActionResult> UpdatePet(int id, [FromBody] Pet pet)
+```
+
+**Purpose**: Update existing pet
+**Returns**: 200 OK with updated pet, or 404 Not Found
+**Authorization**: Required (JWT token)
+**Validation**: Model validation applied
+
+#### 5. DELETE /api/pets/{id} - Delete Pet
+
+```csharp
+[HttpDelete("{id}")]
+public async Task<IActionResult> DeletePet(int id)
+```
+
+**Purpose**: Delete pet by ID
+**Returns**: 204 No Content, or 404 Not Found
+**Authorization**: Required (JWT token)
+
+#### 6. POST /api/pets/{id}/adopt - Adopt Pet
+
+```csharp
+[HttpPost("{id}/adopt")]
+public async Task<IActionResult> AdoptPet(int id)
+```
+
+**Purpose**: Mark pet as adopted (business operation)
+**Returns**: 200 OK with updated pet, or 404 Not Found
+**Authorization**: Required (JWT token)
+**Business Logic**: Updates adoption status through service
 
 **Object Structure**: Anonymous objects matching frontend Pet interface
 
@@ -511,3 +691,101 @@ public IActionResult DeletePet(int id)
 
 - [Security and CORS](./04-security-cors.md)
 - [Configuration and Startup](./05-configuration-startup.md)
+
+## Data Models
+
+### Pet Model (`Models/Pet.cs`)
+
+Primary entity for pet data:
+
+```csharp
+namespace PetLink.API.Models
+{
+    public class Pet
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public bool Adopted { get; set; }
+    }
+}
+```
+
+**Properties**:
+
+- **Id**: Unique identifier (auto-generated)
+- **Name**: Pet name (required)
+- **Type**: Pet type (e.g., "Cat", "Dog")
+- **Adopted**: Adoption status (boolean)
+
+### Authentication Models (`Models/AuthModels.cs`)
+
+DTOs for authentication flow:
+
+```csharp
+namespace PetLink.API.Models
+{
+    public record LoginRequest(string Username, string Password);
+
+    public class LoginResponse
+    {
+        public string Token { get; set; } = string.Empty;
+    }
+
+    public class User
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}
+```
+
+**LoginRequest**: Input for authentication
+**LoginResponse**: JWT token response
+**User**: User entity (for future database integration)
+
+### Error Handling Pattern
+
+#### Structured Error Responses
+
+```csharp
+catch (Exception ex)
+{
+    return StatusCode(500, new { message = "An error occurred while retrieving pets.", details = ex.Message });
+}
+```
+
+**Pattern**: Consistent error response format
+**Information**: User-friendly message and technical details
+**Security**: Controlled exposure of internal details
+
+#### Validation Responses
+
+```csharp
+if (!ModelState.IsValid)
+    return BadRequest(ModelState);
+```
+
+**Purpose**: Automatic model validation
+**Response**: 400 Bad Request with validation errors
+**Framework**: ASP.NET Core model binding and validation
+
+### Authorization Protection
+
+#### `[Authorize]` Attribute
+
+```csharp
+[Authorize]
+public class PetsController : ControllerBase
+```
+
+**Scope**: Applied at controller level - protects all actions
+**Effect**: Requires valid JWT token for access
+**Response**: Returns 401 Unauthorized if no valid token
+
+#### Authentication Flow
+
+1. **Request**: Client sends request with Bearer token
+2. **Middleware**: JWT middleware validates token
+3. **Authorization**: [Authorize] attribute checks authentication
+4. **Access**: Grants or denies access to action method
