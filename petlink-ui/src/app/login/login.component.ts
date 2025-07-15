@@ -1,15 +1,11 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../core/auth.service';
 import { Router } from '@angular/router';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import {FormsModule} from '@angular/forms';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
+  standalone: false,
   templateUrl: './login.component.html',
-  imports: [MatFormFieldModule, MatInputModule, FormsModule],
 })
 export class LoginComponent {
   username = '';

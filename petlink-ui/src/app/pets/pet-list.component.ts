@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { MatListModule } from '@angular/material/list';
 import { PetService } from '../core/pet.service';
 import { Pet } from './pet.model';
 
 @Component({
   selector: 'app-pet-list',
-  standalone: false,
+  standalone: true,
   templateUrl: './pet-list.component.html',
   styleUrls: ['./pet-list.component.scss'],
-
+  imports: [CommonModule, MatListModule]
 })
 export class PetListComponent implements OnInit {
   pets: Pet[] = [];

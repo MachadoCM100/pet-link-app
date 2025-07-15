@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PetLink.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2e2701408cf63a66e000f7ff8f17245aef310919")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+93c75e3e7a1a30ee02fbb47372b9f94051b1cd5e")]
 [assembly: System.Reflection.AssemblyProductAttribute("PetLink.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PetLink.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
