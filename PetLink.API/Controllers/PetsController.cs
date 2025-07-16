@@ -1,12 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PetLink.API.Controllers;
 using PetLink.API.Interfaces;
 using PetLink.API.Models;
+using PetLink.API.Filters;
+using PetLink.API.Helpers;
+using PetLink.API.Configuration;
+using Microsoft.Extensions.Options;
 
 [ApiController]
 [Route("api/pets")]
 [Authorize]
-public class PetsController : ControllerBase
+public class PetsController : BaseController
 {
     private readonly IPetService _petService;
 
@@ -18,103 +23,88 @@ public class PetsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetPets()
     {
-        try
-        {
-            var pets = await _petService.GetAllPetsAsync();
-            return Ok(pets);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while retrieving pets.", details = ex.Message });
-        }
+        var pets = await _petService.GetAllPetsAsync();
+        return Success(pets, "Pets retrieved successfully");
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetPet(int id)
     {
-        try
-        {
-            var pet = await _petService.GetPetByIdAsync(id);
-            if (pet == null)
-                return NotFound(new { message = $"Pet with ID {id} not found." });
+        if (id <= 0)
+            return BadRequest("Pet ID must be greater than 0");
 
-            return Ok(pet);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while retrieving the pet.", details = ex.Message });
-        }
+        var pet = await _petService.GetPetByIdAsync(id);
+        if (pet == null)
+            return NotFound($"Pet with ID {id} not found");
+
+        return Success(pet, "Pet retrieved successfully");
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreatePet([FromBody] Pet pet)
+    [ValidateModel]
+    public async Task<IActionResult> CreatePet([FromBody] CreatePetRequest request)
     {
-        try
+        var pet = new Pet
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            Name = request.Name,
+            Type = request.Type,
+            Description = request.Description,
+            Age = request.Age,
+            Adopted = false,
+            CreatedAt = DateTime.UtcNow
+        };
 
-            var createdPet = await _petService.CreatePetAsync(pet);
-            return CreatedAtAction(nameof(GetPet), new { id = createdPet.Id }, createdPet);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while creating the pet.", details = ex.Message });
-        }
+        var createdPet = await _petService.CreatePetAsync(pet);
+        return Created(createdPet, "Pet created successfully");
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdatePet(int id, [FromBody] Pet pet)
+    [ValidateModel]
+    public async Task<IActionResult> UpdatePet(int id, [FromBody] UpdatePetRequest request)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        if (id <= 0)
+            return BadRequest("Pet ID must be greater than 0");
 
-            var updatedPet = await _petService.UpdatePetAsync(id, pet);
-            if (updatedPet == null)
-                return NotFound(new { message = $"Pet with ID {id} not found." });
-
-            return Ok(updatedPet);
-        }
-        catch (Exception ex)
+        var pet = new Pet
         {
-            return StatusCode(500, new { message = "An error occurred while updating the pet.", details = ex.Message });
-        }
+            Id = id,
+            Name = request.Name,
+            Type = request.Type,
+            Description = request.Description,
+            Age = request.Age
+        };
+
+        var updatedPet = await _petService.UpdatePetAsync(id, pet);
+        if (updatedPet == null)
+            return NotFound($"Pet with ID {id} not found");
+
+        return Success(updatedPet, "Pet updated successfully");
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePet(int id)
     {
-        try
-        {
-            var deleted = await _petService.DeletePetAsync(id);
-            if (!deleted)
-                return NotFound(new { message = $"Pet with ID {id} not found." });
+        if (id <= 0)
+            return BadRequest("Pet ID must be greater than 0");
 
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while deleting the pet.", details = ex.Message });
-        }
+        var deleted = await _petService.DeletePetAsync(id);
+        if (!deleted)
+            return NotFound($"Pet with ID {id} not found");
+
+        return Success("Pet deleted successfully");
     }
 
     [HttpPost("{id}/adopt")]
     public async Task<IActionResult> AdoptPet(int id)
     {
-        try
-        {
-            var adopted = await _petService.AdoptPetAsync(id);
-            if (!adopted)
-                return NotFound(new { message = $"Pet with ID {id} not found." });
+        if (id <= 0)
+            return BadRequest("Pet ID must be greater than 0");
 
-            var pet = await _petService.GetPetByIdAsync(id);
-            return Ok(pet);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while adopting the pet.", details = ex.Message });
-        }
+        var adopted = await _petService.AdoptPetAsync(id);
+        if (!adopted)
+            return NotFound($"Pet with ID {id} not found");
+
+        var pet = await _petService.GetPetByIdAsync(id);
+        return Success(pet, "Pet adopted successfully");
     }
 }

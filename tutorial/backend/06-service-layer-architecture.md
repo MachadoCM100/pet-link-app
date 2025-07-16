@@ -48,11 +48,86 @@ public interface IPetService
 ```csharp
 public interface IAuthService
 {
-    Task<LoginResponse?> AuthenticateAsync(LoginRequest request);
-    Task<bool> ValidateUserAsync(string username, string password);
-    string GenerateJwtToken(string username);  // Business logic
+    Task<string> LoginAsync(LoginRequest request);
+    Task<bool> RegisterAsync(RegisterRequest request);
+    Task<bool> ValidateTokenAsync(string token);
 }
 ```
+
+### **2. Business Logic Implementation**
+
+**PetService.cs** - Contains pet business logic with centralized validation:
+
+```csharp
+public class PetService : IPetService
+{
+    private readonly ValidationSettings _validationSettings;
+
+    public PetService(IOptions<ValidationSettings> validationSettings)
+    {
+        _validationSettings = validationSettings.Value;
+    }
+
+    public async Task<Pet> CreatePetAsync(Pet pet)
+    {
+        // Business validation using configuration
+        var request = new CreatePetRequest 
+        { 
+            Name = pet.Name, 
+            Type = pet.Type, 
+            Age = pet.Age,
+            Description = pet.Description 
+        };
+        
+        // Centralized validation with configuration
+        ValidationHelper.ValidatePetRequestBusinessRules(request, _validationSettings.Pet);
+
+        // Business rules
+        if (await PetExistsWithNameAsync(pet.Name))
+            throw new ConflictException("A pet with this name already exists");
+
+        if (pet.Age < 0)
+            throw new ValidationException("Pet age cannot be negative");
+
+        // Database operation
+        return await SavePetAsync(pet);
+    }
+
+    public async Task<bool> AdoptPetAsync(int id)
+    {
+        var pet = await GetPetByIdAsync(id);
+        if (pet == null)
+            throw new NotFoundException($"Pet with ID {id} not found");
+
+        if (pet.Adopted)
+            throw new BusinessLogicException("Pet is already adopted");
+
+        pet.Adopted = true;
+        await UpdatePetAsync(id, pet);
+        return true;
+    }
+}
+```
+
+### **3. Error Handling Integration**
+
+The service layer integrates with the centralized error handling system:
+
+- **ValidationException**: For input validation failures
+- **NotFoundException**: When resources don't exist
+- **BusinessLogicException**: For business rule violations
+- **ConflictException**: For duplicate/conflict scenarios
+
+### **4. Configuration-Driven Validation**
+
+Services use `ValidationHelper` class that reads from configuration:
+
+```csharp
+// ValidationHelper uses appsettings.Validation.json
+ValidationHelper.ValidatePetRequestBusinessRules(request, _validationSettings.Pet);
+```
+
+This allows validation rules to be modified without code changes.
 
 ### **2. Business Logic in Services**
 

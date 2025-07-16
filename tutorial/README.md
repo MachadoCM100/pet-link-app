@@ -2,6 +2,7 @@
 
 Welcome to the PetLink application tutorial! This directory contains comprehensive documentation explaining how each component of the PetLink application works, including both the Angular frontend and the .NET Core API backend.
 
+
 ## Overview
 
 PetLink is a full-stack web application for managing pet adoption records. It consists of:
@@ -45,6 +46,7 @@ PetLink Application
 5. [Configuration and Startup](./backend/05-configuration-startup.md)
 6. [Service Layer Architecture](./backend/06-service-layer-architecture.md)
 7. [Models and DTOs](./backend/07-models-dtos.md)
+8. [Error Handling and Validation](./backend/08-error-handling-validation.md)
 
 ### Getting Started
 

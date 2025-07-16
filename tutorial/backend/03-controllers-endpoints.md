@@ -6,29 +6,66 @@ The PetLink API uses ASP.NET Core controllers with a **service layer architectur
 
 ## Controller Architecture
 
-### 1. Service Layer Integration
+### 1. Centralized Error Handling
+- Global exception middleware handles all errors
+- Controllers focus only on HTTP concerns
+- Standardized API responses across all endpoints
+
+### 2. Service Layer Integration
 - Controllers inject and use service interfaces
 - Business logic separated into service classes
 - Clean separation of HTTP and business concerns
 
-### 2. RESTful Design Patterns
-### 3. HTTP Verb Mapping  
-### 4. Request/Response Handling
-### 5. Authorization Integration
-### 6. Error Handling and Validation
+### 3. Automatic Validation
+- Global validation filters handle model validation
+- Configuration-driven validation rules
+- Consistent error response format
+
+### 4. RESTful Design Patterns
+### 5. HTTP Verb Mapping  
+### 6. Request/Response Handling
+### 7. Authorization Integration
+
+## BaseController - Standardized Responses
+
+All controllers inherit from `BaseController` for consistent responses:
+
+```csharp
+[ApiController]
+public abstract class BaseController : ControllerBase
+{
+    protected IActionResult Success<T>(T data, string message = "Success")
+    {
+        return Ok(new ApiResponse<T>
+        {
+            Success = true,
+            Data = data,
+            Message = message,
+            Timestamp = DateTime.UtcNow
+        });
+    }
+
+    protected IActionResult Created<T>(T data, string message = "Resource created")
+    {
+        return StatusCode(201, new ApiResponse<T>
+        {
+            Success = true,
+            Data = data,
+            Message = message,
+            Timestamp = DateTime.UtcNow
+        });
+    }
+}
+```
 
 ## AuthController - Authentication Endpoints
 
-Handles authentication HTTP requests and delegates to `IAuthService`.
+Clean authentication controller with centralized error handling:
 
 ```csharp
-using Microsoft.AspNetCore.Mvc;
-using PetLink.API.Interfaces;
-using PetLink.API.Models;
-
 [ApiController]
 [Route("auth")]
-public class AuthController : ControllerBase
+public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
 
@@ -38,42 +75,43 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [ValidateModel]  // Automatic validation
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            Console.WriteLine($"Login attempt: Username={request.Username}, Password={request.Password}");
-
-            var result = await _authService.AuthenticateAsync(request);
-            if (result == null)
-                return Unauthorized(new { message = "Invalid username or password." });
-
-            return Ok(new { token = result.Token });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred during authentication.", details = ex.Message });
-        }
+        var result = await _authService.AuthenticateAsync(request);
+        return Success(result, "Login successful");
     }
-}
-        };
 
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var tokenString = tokenHandler.WriteToken(token);
-
-        return Ok(new { token = tokenString });
+    [HttpPost("register")]
+    [ValidateModel]  // Automatic validation
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        var user = await _authService.RegisterAsync(request);
+        return Created(new { username = user.Username, email = user.Email }, "User registered successfully");
     }
-}
 
-public class LoginRequest
-{
-    public string Username { get; set; }
-    public string Password { get; set; }
+    [HttpPost("refresh")]
+    [ValidateModel]  // Automatic validation
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        var result = await _authService.RefreshTokenAsync(request.Token);
+        return Success(result, "Token refreshed successfully");
+    }
 }
 ```
+
+**Key Features:**
+- ✅ **Clean Methods**: No manual validation or error handling
+- ✅ **Automatic Validation**: `[ValidateModel]` handles basic validation
+- ✅ **Consistent Responses**: Uses BaseController methods
+- ✅ **Exception Handling**: Global middleware handles all errors
+- ✅ **Business Logic**: All validation logic in AuthService
+
+**Authentication Flow:**
+1. **Request** → `[ValidateModel]` (basic validation)
+2. **Controller** → Clean data mapping
+3. **AuthService** → ValidationHelper (business rules) + configuration
+4. **Response** → Standardized format via BaseController
 
 ### Controller Attributes
 

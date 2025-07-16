@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using PetLink.API.Interfaces;
 using PetLink.API.Models;
+using PetLink.API.Filters;
+using PetLink.API.Controllers;
 
 [ApiController]
 [Route("auth")]
-public class AuthController : ControllerBase
+public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
 
@@ -14,24 +16,26 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [ValidateModel]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        var result = await _authService.AuthenticateAsync(request);
+        return Success(result, "Login successful");
+    }
 
-            Console.WriteLine($"Login attempt: Username={request.Username}, Password={request.Password}");
+    [HttpPost("register")]
+    [ValidateModel]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        var user = await _authService.RegisterAsync(request);
+        return Created(new { username = user.Username, email = user.Email }, "User registered successfully");
+    }
 
-            var result = await _authService.AuthenticateAsync(request);
-            if (result == null)
-                return Unauthorized(new { message = "Invalid username or password." });
-
-            return Ok(new { token = result.Token });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred during authentication.", details = ex.Message });
-        }
+    [HttpPost("refresh")]
+    [ValidateModel]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        var result = await _authService.RefreshTokenAsync(request.Token);
+        return Success(result, "Token refreshed successfully");
     }
 }

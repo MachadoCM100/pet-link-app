@@ -1,21 +1,86 @@
-# Authentication and JWT
+# Authentication and JWT with Centralized Validation
 
 ## Overview
 
-The PetLink API implements JWT (JSON Web Token) based authentication using a **service layer architecture**. This provides secure, stateless user authentication that works seamlessly with the Angular frontend while maintaining clean separation of concerns.
+The PetLink API implements JWT (JSON Web Token) based authentication using a **service layer architecture** with **centralized validation and error handling**. This provides secure, stateless user authentication with configuration-driven validation rules and consistent error responses.
 
 ## JWT Authentication Architecture
 
 ### 1. Service Layer Design
 
 - **IAuthService**: Interface defining authentication contracts
-- **AuthService**: Business logic implementation for authentication
-- **AuthController**: HTTP endpoint handling (delegates to service)
+- **AuthService**: Business logic implementation with configuration-driven validation
+- **AuthController**: Clean HTTP endpoint handling (delegates to service)
+- **ValidationHelper**: Centralized validation using configuration
 
-### 2. Token Generation - Login Process
-### 3. Token Validation - Request Authentication  
-### 4. Security Configuration - Middleware Setup
-### 5. Authorization - Protected Endpoints
+### 2. Configuration-Driven Validation
+### 3. Token Generation - Login Process
+### 4. Token Validation - Request Authentication  
+### 5. Security Configuration - Middleware Setup
+### 6. Authorization - Protected Endpoints
+
+## Authentication Models with Clean Validation
+
+### Clean Model Definitions (`Models/AuthModels.cs`)
+
+Models use minimal annotations, business validation handled in service layer:
+
+```csharp
+public class LoginRequest
+{
+    [Required]
+    public string Username { get; set; } = string.Empty;
+
+    [Required]
+    public string Password { get; set; } = string.Empty;
+}
+
+public class RegisterRequest
+{
+    [Required]
+    public string Username { get; set; } = string.Empty;
+
+    [Required]
+    public string Password { get; set; } = string.Empty;
+
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
+}
+
+public class LoginResponse
+{
+    public string Token { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
+    public string Username { get; set; } = string.Empty;
+}
+
+public class User
+{
+    [Required]
+    public string Username { get; set; } = string.Empty;
+    
+    [Required]
+    public string Password { get; set; } = string.Empty;
+    
+    [Required]
+    [EmailAddress]
+    public string? Email { get; set; }
+    
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class RefreshTokenRequest
+{
+    [Required]
+    public string Token { get; set; } = string.Empty;
+}
+```
+
+**Key Features:**
+- ✅ Minimal model annotations (only [Required] and [EmailAddress])
+- ✅ Business validation rules handled in ValidationHelper
+- ✅ Configuration-driven length and format validation
 
 ## Authentication Service Layer
 
@@ -31,73 +96,76 @@ namespace PetLink.API.Interfaces
     public interface IAuthService
     {
         Task<LoginResponse?> AuthenticateAsync(LoginRequest request);
-        Task<bool> ValidateUserAsync(string username, string password);
+        Task<User> RegisterAsync(RegisterRequest request);
+        Task<User?> GetUserByUsernameAsync(string username);
+        Task<LoginResponse?> RefreshTokenAsync(string refreshToken);
         string GenerateJwtToken(string username);
     }
 }
 ```
 
-**Key Methods**:
+### AuthService Implementation with Configuration (`Services/AuthService.cs`)
 
-- **AuthenticateAsync**: Handles complete authentication flow
-- **ValidateUserAsync**: Validates user credentials  
-- **GenerateJwtToken**: Creates JWT tokens for authenticated users
-
-### AuthService Implementation (`Services/AuthService.cs`)
-
-Contains all authentication business logic:
+Business logic with centralized validation:
 
 ```csharp
-using Microsoft.IdentityModel.Tokens;
-using PetLink.API.Interfaces;
-using PetLink.API.Models;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-
-namespace PetLink.API.Services
+public class AuthService : IAuthService
 {
-    public class AuthService : IAuthService
+    private readonly ValidationSettings _validationSettings;
+    private readonly ErrorMessages _errorMessages;
+
+    public AuthService(IOptions<ValidationSettings> validationSettings, IOptions<ErrorMessages> errorMessages)
     {
-        // Demo credentials - in a real application, this would come from a database
-        private const string DemoUsername = "admin";
-        private const string DemoPassword = "password";
-        private const string SecretKey = "this is my custom Secret key for authentication";
+        _validationSettings = validationSettings.Value;
+        _errorMessages = errorMessages.Value;
+    }
 
-        public Task<LoginResponse?> AuthenticateAsync(LoginRequest request)
+    public Task<LoginResponse?> AuthenticateAsync(LoginRequest request)
+    {
+        // Configuration-driven validation
+        ValidationHelper.ValidateLoginRequestBusinessRules(request, _validationSettings.User);
+
+        var user = _users.FirstOrDefault(u => u.Username == request.Username);
+        if (user == null || user.Password != request.Password)
+            throw new UnauthorizedException(_errorMessages.Auth.InvalidCredentials);
+
+        var token = GenerateJwtToken(request.Username);
+        var expiresAt = DateTime.UtcNow.AddHours(1);
+
+        return Task.FromResult<LoginResponse?>(new LoginResponse 
+        { 
+            Token = token,
+            ExpiresAt = expiresAt,
+            Username = user.Username
+        });
+    }
+
+    public Task<User> RegisterAsync(RegisterRequest request)
+    {
+        // Configuration-driven validation
+        ValidationHelper.ValidateRegisterRequestBusinessRules(request, _validationSettings.User);
+
+        // Check if username already exists
+        if (_users.Any(u => u.Username.Equals(request.Username, StringComparison.OrdinalIgnoreCase)))
+            throw new ConflictException(_errorMessages.Auth.UserExists);
+
+        // Check if email already exists
+        if (_users.Any(u => u.Email?.Equals(request.Email, StringComparison.OrdinalIgnoreCase) == true))
+            throw new ConflictException(_errorMessages.Auth.EmailExists);
+
+        var user = new User
         {
-            if (!ValidateUserAsync(request.Username, request.Password).Result)
-                return Task.FromResult<LoginResponse?>(null);
+            Username = request.Username,
+            Password = request.Password, // In real app, hash this password
+            Email = request.Email,
+            CreatedAt = DateTime.UtcNow
+        };
 
-            var token = GenerateJwtToken(request.Username);
-            return Task.FromResult<LoginResponse?>(new LoginResponse { Token = token });
-        }
-
-        public Task<bool> ValidateUserAsync(string username, string password)
-        {
-            // In a real application, this would validate against a database
-            // with proper password hashing
-            var isValid = username == DemoUsername && password == DemoPassword;
-            return Task.FromResult(isValid);
-        }
-
-        public string GenerateJwtToken(string username)
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(SecretKey);
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[] 
-                { 
-                    new Claim(ClaimTypes.Name, username),
-                    new Claim(ClaimTypes.NameIdentifier, username)
-                }),
-                Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key), 
-                    SecurityAlgorithms.HmacSha256Signature)
-            };
+        _users.Add(user);
+        return Task.FromResult(user);
+    }
+}
+```
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
