@@ -4,8 +4,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 
 import { PetListComponent } from './pet-list.component';
-import { PetService } from '../core/pet.service';
-import { Pet } from './pet.model';
+import { PetService } from './pet.service';
+import { Pet, ApiResponse } from '../core/models/api.models';
 
 describe('PetListComponent', () => {
   let component: PetListComponent;
@@ -15,10 +15,17 @@ describe('PetListComponent', () => {
   let consoleErrorSpy: jasmine.Spy;
 
   const mockPets: Pet[] = [
-    { id: 1, name: 'Buddy', type: 'Dog', adopted: false },
-    { id: 2, name: 'Whiskers', type: 'Cat', adopted: true },
-    { id: 3, name: 'Rex', type: 'Dog', adopted: false }
+    { id: 1, name: 'Buddy', type: 'Dog', adopted: false , createdAt: new Date().toISOString() },
+    { id: 2, name: 'Whiskers', type: 'Cat', adopted: true , createdAt: new Date().toISOString() },
+    { id: 3, name: 'Rex', type: 'Dog', adopted: false , createdAt: new Date().toISOString() }
   ];
+
+  const mockApiResponse: ApiResponse<Pet[]> = {
+    data: mockPets,
+    success: true,
+    message: 'Pets fetched successfully',
+    timestamp: new Date().toISOString(),
+  };
 
   beforeEach(async () => {
     // Create a spy object for PetService
@@ -55,7 +62,7 @@ describe('PetListComponent', () => {
   describe('ngOnInit', () => {
     it('should fetch pets successfully on initialization', () => {
       // Arrange
-      petService.getPets.and.returnValue(of(mockPets));
+      petService.getPets.and.returnValue(of(mockApiResponse));
 
       // Act
       component.ngOnInit();
@@ -68,7 +75,13 @@ describe('PetListComponent', () => {
 
     it('should handle empty pets array from service', () => {
       // Arrange
-      petService.getPets.and.returnValue(of([]));
+      const mockApiResponse: ApiResponse<Pet[]> = {
+        data: [],
+        success: true,
+        message: 'Empty Pets\' list fetched successfully',
+        timestamp: new Date().toISOString(),
+      };
+      petService.getPets.and.returnValue(of(mockApiResponse));
 
       // Act
       component.ngOnInit();
@@ -135,7 +148,7 @@ describe('PetListComponent', () => {
 
     it('should call getPets when component initializes', () => {
       // Arrange
-      petService.getPets.and.returnValue(of(mockPets));
+      petService.getPets.and.returnValue(of(mockApiResponse));
 
       // Act
       fixture.detectChanges(); // This triggers ngOnInit
@@ -147,7 +160,7 @@ describe('PetListComponent', () => {
 
     it('should update pets array after successful service call', () => {
       // Arrange
-      petService.getPets.and.returnValue(of(mockPets));
+      petService.getPets.and.returnValue(of(mockApiResponse));
 
       // Act
       fixture.detectChanges();
@@ -195,7 +208,7 @@ describe('PetListComponent', () => {
       expect(component.pets).toEqual([]);
       
       // Verify component can recover from error
-      petService.getPets.and.returnValue(of(mockPets));
+      petService.getPets.and.returnValue(of(mockApiResponse));
       component.ngOnInit();
       expect(component.pets).toEqual(mockPets);
     });
@@ -204,10 +217,7 @@ describe('PetListComponent', () => {
   describe('Pet Data Validation', () => {
     it('should handle pets with all required properties', () => {
       // Arrange
-      const validPets: Pet[] = [
-        { id: 1, name: 'Test Pet', type: 'Dog', adopted: false }
-      ];
-      petService.getPets.and.returnValue(of(validPets));
+      petService.getPets.and.returnValue(of(mockApiResponse));
 
       // Act
       component.ngOnInit();
@@ -217,17 +227,25 @@ describe('PetListComponent', () => {
         id: jasmine.any(Number),
         name: jasmine.any(String),
         type: jasmine.any(String),
-        adopted: jasmine.any(Boolean)
+        adopted: jasmine.any(Boolean),
+        createdAt: jasmine.any(String)
       }));
     });
 
     it('should handle pets with different adoption statuses', () => {
       // Arrange
       const mixedAdoptionPets: Pet[] = [
-        { id: 1, name: 'Available Pet', type: 'Dog', adopted: false },
-        { id: 2, name: 'Adopted Pet', type: 'Cat', adopted: true }
+        { id: 1, name: 'Available Pet', type: 'Dog', adopted: false, createdAt: new Date().toISOString() },
+        { id: 2, name: 'Adopted Pet', type: 'Cat', adopted: true, createdAt: new Date().toISOString() }
       ];
-      petService.getPets.and.returnValue(of(mixedAdoptionPets));
+      const mockApiResponse: ApiResponse<Pet[]> = {
+        data: mixedAdoptionPets,
+        success: true,
+        message: 'Empty Pets\' list fetched successfully',
+        timestamp: new Date().toISOString(),
+      };
+
+      petService.getPets.and.returnValue(of(mockApiResponse));
 
       // Act
       component.ngOnInit();
@@ -241,11 +259,17 @@ describe('PetListComponent', () => {
     it('should handle pets with different types', () => {
       // Arrange
       const diversePets: Pet[] = [
-        { id: 1, name: 'Buddy', type: 'Dog', adopted: false },
-        { id: 2, name: 'Whiskers', type: 'Cat', adopted: false },
-        { id: 3, name: 'Nibbles', type: 'Rabbit', adopted: false }
+        { id: 1, name: 'Buddy', type: 'Dog', adopted: false, createdAt: new Date().toISOString() },
+        { id: 2, name: 'Whiskers', type: 'Cat', adopted: false, createdAt: new Date().toISOString() },
+        { id: 3, name: 'Nibbles', type: 'Rabbit', adopted: false, createdAt: new Date().toISOString() }
       ];
-      petService.getPets.and.returnValue(of(diversePets));
+      const mockApiResponse: ApiResponse<Pet[]> = {
+        data: diversePets,
+        success: true,
+        message: 'Pets list fetched successfully',
+        timestamp: new Date().toISOString(),
+      };
+      petService.getPets.and.returnValue(of(mockApiResponse));
 
       // Act
       component.ngOnInit();
@@ -259,7 +283,7 @@ describe('PetListComponent', () => {
   describe('Service Interaction', () => {
     it('should call PetService.getPets exactly once during initialization', () => {
       // Arrange
-      petService.getPets.and.returnValue(of(mockPets));
+      petService.getPets.and.returnValue(of(mockApiResponse));
 
       // Act
       component.ngOnInit();
@@ -271,7 +295,7 @@ describe('PetListComponent', () => {
 
     it('should not make additional service calls after initialization', () => {
       // Arrange
-      petService.getPets.and.returnValue(of(mockPets));
+      petService.getPets.and.returnValue(of(mockApiResponse));
 
       // Act
       component.ngOnInit();

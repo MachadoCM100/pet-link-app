@@ -7,26 +7,32 @@ The PetLink frontend is built using Angular 18+ with TypeScript. It follows Angu
 ## Project Structure
 
 ```txt
-petlink-ui/src/app/
-├── app.component.ts          # Root application component
-├── app.config.ts            # Application configuration
-├── app.module.ts            # Main application module
-├── app-routing.module.ts    # Route definitions
-├── core/                    # Core services and utilities
-│   ├── auth.service.ts      # Authentication service
-│   ├── auth.guard.ts        # Route protection
-│   ├── auth.interceptor.ts  # HTTP request interceptor
-│   ├── pet.service.ts       # Pet data service
-│   └── environment.ts       # Environment configuration
-├── login/                   # Login feature module
-│   ├── login.component.ts   # Login component logic
-│   ├── login.component.html # Login template
-│   └── login.scss          # Login styles
-└── pets/                    # Pet management module
-    ├── pet-list.component.ts   # Pet list component
-    ├── pet-list.component.html # Pet list template
-    ├── pet-list.component.scss # Pet list styles
-    └── pet.model.ts           # Pet data models
+├── app.component.ts             # Root application component
+├── app.config.ts                # Application configuration
+├── app.module.ts                # Main application module
+├── app-routing.module.ts        # Route definitions
+├── core/                        # Core services and utilities
+│   ├── auth.service.ts          # Handles authentication logic
+│   ├── auth.guard.ts            # Protects routes based on auth state
+│   ├── auth.interceptor.ts      # Intercepts HTTP requests for auth
+│   ├── environment.ts           # Environment-specific settings
+│   └── models/                  # Shared TypeScript interfaces and types
+│       ├── pet.model.ts         # Pet data model interface
+│       └── user.model.ts        # User data model interface
+├── login/                       # Login feature module
+│   ├── login.component.ts       # Login component logic
+│   ├── login.component.html     # Login component template
+│   ├── login.component.scss     # Login component styles
+│   └── login.service.ts         # Handles login API calls
+└── pets/                        # Pet management feature module
+  ├── pet-list.component.ts     # Displays list of pets
+  ├── pet-list.component.html   # Pet list template
+  ├── pet-list.component.scss   # Pet list styles
+  ├── pet-detail.component.ts   # Displays pet details
+  ├── pet-detail.component.html # Pet detail template
+  ├── pet-detail.component.scss # Pet detail styles
+  ├── pet.service.ts            # Handles pet-related API calls
+  └── pet.model.ts              # Pet-specific model (if different from shared)
 ```
 
 ## Key Components
@@ -92,6 +98,56 @@ The application uses a hybrid approach based on loading strategy:
 - Imports its own dependencies (`CommonModule`, `MatListModule`)
 - Easier to test and more modular
 - Perfect for lazy-loaded components
+
+### 4. Core Error Handling Infrastructure
+
+The application implements a robust error handling system through several key components:
+
+- **Interceptors**: HTTP request/response middleware for cross-cutting concerns
+- **Notification System**: Centralized user feedback mechanism
+- **Global Error Handler**: Consistent error processing across the application
+
+#### HTTP Interceptor Chain
+
+```typescript
+// app.module.ts - Interceptor registration order is critical
+providers: [
+  {
+    provide: HTTP_INTERCEPTORS,
+    useClass: AuthInterceptor,        // First: Add auth headers
+    multi: true
+  },
+  {
+    provide: HTTP_INTERCEPTORS,
+    useClass: GlobalErrorInterceptor, // Second: Handle errors
+    multi: true
+  }
+]
+```
+
+**Interceptor Chain Theory**:
+
+- **Sequential Processing**: Interceptors form a chain where each can modify requests/responses
+- **Order Dependency**: AuthInterceptor must run before GlobalErrorInterceptor
+- **Cross-Cutting Concerns**: Authentication and error handling apply to all HTTP calls
+- **Separation of Concerns**: Each interceptor has a single responsibility
+
+### 5. Component Declaration Strategy
+
+```typescript
+// app.module.ts - Core components declared at module level
+declarations: [
+  AppComponent,           // Root application component
+  LoginComponent,         // Authentication component
+  NotificationComponent   // Global notification system
+]
+```
+
+**Module-Level vs Standalone Components**:
+
+- **Module Components**: Core app infrastructure (login, notifications)
+- **Standalone Components**: Feature-specific components (pet-list)
+- **Lazy Loading**: Standalone components support better code splitting
 
 ## Angular Features Used
 

@@ -1,13 +1,17 @@
 import { Injectable } from '@angular/core';
-import { environment } from './environment';
+import { environment } from '../environment';
 
 export interface ApiEndpoints {
   auth: {
     login: string;
+    register: string;
+    refresh: string;
   };
   pets: {
     base: string;
     list: string;
+    byId: (id: number) => string;
+    adopt: (id: number) => string;
   };
 }
 
@@ -18,10 +22,14 @@ export class ApiConfigService {
   public readonly endpoints: ApiEndpoints = {
     auth: {
       login: `${this.baseUrl}/auth/login`,
+      register: `${this.baseUrl}/auth/register`,
+      refresh: `${this.baseUrl}/auth/refresh`,
     },
     pets: {
       base: `${this.baseUrl}/api/pets`,
       list: `${this.baseUrl}/api/pets`,
+      byId: (id: number) => `${this.baseUrl}/api/pets/${id}`,
+      adopt: (id: number) => `${this.baseUrl}/api/pets/${id}/adopt`,
     }
   };
 

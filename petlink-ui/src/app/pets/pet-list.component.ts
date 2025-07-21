@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatListModule } from '@angular/material/list';
-import { PetService } from '../core/pet.service';
-import { Pet } from './pet.model';
+import { PetService } from './pet.service';
+import { Pet } from '../core/models/api.models';
 
 @Component({
   selector: 'app-pet-list',
@@ -13,19 +13,27 @@ import { Pet } from './pet.model';
 })
 export class PetListComponent implements OnInit {
   pets: Pet[] = [];
+  isLoading = false;
 
   constructor(private petService: PetService) {}
 
   ngOnInit(): void {
+    this.isLoading = true;
+    
     this.petService.getPets().subscribe({
-      next: pets => this.pets = pets,
-      error: err => {
-      console.error('Failed to fetch pets:', err);
-      alert('Could not load pets. Please try again later.');
+      next: response => {
+        if (response.success && response.data) {
+          this.pets = response.data;
+        }
+        this.isLoading = false;
+      },
+      error: error => {
+        // Error handling is done by GlobalErrorInterceptor
+        // Just reset loading state
+        this.isLoading = false;
+        console.error('Failed to fetch pets:', error);
       }
     });
   }
 }
-// export class AppComponent {}
-// This component fetches the list of pets from the PetService and displays them in the template.
 // It uses the ngOnInit lifecycle hook to call the service when the component initializes.

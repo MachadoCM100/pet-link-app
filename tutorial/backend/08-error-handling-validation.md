@@ -274,12 +274,14 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 ## 💡 **Benefits**
 
 ### **Configuration Benefits**
+
 - ✅ **Resilient**: Falls back to C# defaults if JSON config is missing
 - ✅ **Flexible**: Change validation rules without recompiling
 - ✅ **Environment-specific**: Different rules for dev/staging/production
 - ✅ **Centralized**: All validation logic in one place
 
 ### **Architecture Benefits**
+
 - ✅ **Consistent**: Standardized response format across all endpoints
 - ✅ **Maintainable**: Single source of truth for error handling
 - ✅ **Testable**: Clean separation of validation logic

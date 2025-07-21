@@ -12,6 +12,67 @@ Angular services provide reusable business logic and handle HTTP communication w
 ### 4. Centralized API Configuration
 ### 5. Error Handling Strategies
 
+## HTTP Interceptor Integration
+
+### Transparent Authentication
+
+Services no longer need to handle authentication manually:
+
+```typescript
+// Before interceptors (manual auth handling)
+getPets(): Observable<Pet[]> {
+  const headers = new HttpHeaders({
+    'Authorization': `Bearer ${this.auth.getToken()}`
+  });
+  
+  return this.http.get<Pet[]>(this.apiUrl, { headers });
+}
+
+// After interceptors (automatic auth)
+getPets(): Observable<Pet[]> {
+  return this.http.get<Pet[]>(this.apiUrl);
+  // AuthInterceptor automatically adds Authorization header
+}
+```
+
+### Centralized Error Handling
+
+```typescript
+// Before interceptors (manual error handling)
+getPets(): Observable<Pet[]> {
+  return this.http.get<Pet[]>(this.apiUrl).pipe(
+    catchError(error => {
+      console.error('Error:', error);
+      if (error.status === 401) {
+        this.router.navigate(['/login']);
+      }
+      return throwError(() => error);
+    })
+  );
+}
+
+// After interceptors (automatic error handling)
+getPets(): Observable<Pet[]> {
+  return this.http.get<Pet[]>(this.apiUrl);
+  // GlobalErrorInterceptor handles all errors automatically
+  // User notifications, auth redirects, logging all handled
+}
+```
+
+### Service Simplification Benefits
+
+**Reduced Boilerplate**:
+
+- No repeated authentication logic
+- No repeated error handling patterns  
+- Services focus on business logic only
+
+**Consistency**:
+
+- All HTTP calls get same treatment
+- Uniform error handling across features
+- Centralized authentication management
+
 ## PetService (`pet.service.ts`)
 
 Handles all pet-related data operations and API communication.
@@ -70,46 +131,6 @@ constructor(
 - Both services provide reactive programming patterns
 - Clean separation of concerns between HTTP and configuration logic
 
-#### API Configuration Integration
-
-```typescript
-return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list);
-```
-
-**Centralized Endpoint Management**:
-
-- Uses `ApiConfigService` for endpoint URLs instead of string concatenation
-- Provides type safety and IntelliSense support
-- Environment-aware configuration (dev/production)
-- Single source of truth for all API endpoints
-- Easy maintenance and updates
-
-**Benefits over Direct URL Construction**:
-
-```typescript
-// ❌ Old approach (error-prone)
-private apiUrl = environment.apiUrl + '/api/pets';
-
-// ✅ New approach (type-safe and centralized)
-this.apiConfig.endpoints.pets.list
-```
-
-#### `getPets()` Method
-
-```typescript
-getPets(): Observable<Pet[]> {
-  return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list);
-}
-```
-
-**Method Breakdown**:
-
-- **Return Type**: `Observable<Pet[]>` - Reactive stream of Pet array
-- **HTTP GET**: Fetches data from the backend API
-- **Type Safety**: Generic `<Pet[]>` ensures compile-time type checking
-- **Lazy Execution**: HTTP call only made when subscribed
-- **Centralized URL**: Uses `ApiConfigService` for endpoint management
-
 ## AuthService HTTP Operations
 
 The AuthService demonstrates POST operations and token management.
@@ -166,6 +187,7 @@ export class ApiConfigService {
 ### Benefits of Centralized Configuration
 
 **Type Safety**:
+
 ```typescript
 // ✅ Compile-time validation
 this.apiConfig.endpoints.pets.list
@@ -175,11 +197,13 @@ environment.apiUrl + '/api/pets'
 ```
 
 **Single Source of Truth**:
+
 - All API endpoints defined in one location
 - Easy to update and maintain
 - Consistent naming across the application
 
 **Environment Integration**:
+
 - Automatically uses environment-specific base URLs
 - No manual URL construction needed
 - Seamless dev/production switching
@@ -290,68 +314,6 @@ ngOnInit(): void {
     error: err => {
       console.error('Failed to fetch pets:', err);
       alert('Could not load pets. Please try again later.');
-    }
-  });
-}
-```
-
-**Error Handling Features**:
-
-- **User-Friendly Messages**: Clear error message for users
-- **Development Logging**: Detailed error info in console
-- **Graceful Degradation**: App continues to function despite errors
-- **Immediate Feedback**: Alert provides instant user notification
-
-### Service-Level Error Handling
-
-```typescript
-import { catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
-
-getPets(): Observable<Pet[]> {
-  return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list).pipe(
-    catchError(error => {
-      console.error('Error fetching pets:', error);
-      return throwError(() => new Error('Failed to load pets'));
-    })
-  );
-}
-```
-
-### Enhanced Error Handling Patterns
-
-**Multi-Level Error Handling**:
-
-```typescript
-// Service level - log and transform errors
-getPets(): Observable<Pet[]> {
-  return this.http.get<Pet[]>(this.apiConfig.endpoints.pets.list).pipe(
-    catchError(error => {
-      console.error('PetService: Error fetching pets:', error);
-      
-      // Transform HTTP errors to user-friendly messages
-      const userMessage = error.status === 0 
-        ? 'Unable to connect to server' 
-        : 'Failed to load pets';
-        
-      return throwError(() => new Error(userMessage));
-    })
-  );
-}
-
-// Component level - handle user experience
-ngOnInit(): void {
-  this.loading = true;
-  this.petService.getPets().subscribe({
-    next: pets => {
-      this.pets = pets;
-      this.loading = false;
-    },
-    error: err => {
-      console.error('Failed to fetch pets:', err);
-      this.errorMessage = err.message || 'Could not load pets. Please try again later.';
-      this.loading = false;
-      // Could also show a toast notification instead of alert
     }
   });
 }
