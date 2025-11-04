@@ -1,0 +1,56 @@
+.pet-detail-container {
+max-width: 600px;
+margin: 0 auto;
+}
+
+.detail-header {
+display: flex;
+align-items: center;
+margin-bottom: 1rem;
+}
+
+.detail-header h2 {
+margin: 0 0 0 1rem;
+}
+
+.pet-detail-card {
+margin-bottom: 2rem;
+}
+
+.detail-grid {
+display: grid;
+gap: 1rem;
+}
+
+.detail-item strong {
+color: #2c3e50;
+}
+
+.status-badge {
+padding: 0.25rem 0.5rem;
+border-radius: 12px;
+font-size: 0.875rem;
+font-weight: 500;
+}
+
+.status-badge.available {
+background-color: #e8f5e8;
+color: #2e7d32;
+}
+
+.status-badge.adopted {
+background-color: #fff3e0;
+color: #f57c00;
+}
+
+.loading-container {
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 2rem;
+}
+
+.loading-container p {
+margin-top: 1rem;
+color: #666;
+}

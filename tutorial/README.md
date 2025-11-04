@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD029 -->
+
 # PetLink Application Tutorial
 
 Welcome to the PetLink application tutorial! This directory contains comprehensive documentation explaining how each component of the PetLink application works, including both the Angular frontend and the .NET Core API backend.
@@ -42,6 +44,7 @@ PetLink Application
 
 9. [Error Handling and Validation](./frontend/09-error-handling-validation.md)
 10. [HTTP Interceptors and Error Handling](./10-interceptors-error-handling.md)
+11. [Component Navigation Patterns](./11-component-navigation-patterns.md)
 
 ### Backend (.NET Core/C#)
 

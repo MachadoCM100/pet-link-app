@@ -1,8 +1,55 @@
-<h2>Available Pets</h2>
-<mat-list>
-  <mat-list-item *ngFor="let pet of pets">
-    <strong>{{ pet.name }}</strong> — {{ pet.type }}
-    <span *ngIf="pet.adopted" style="color: green;">(Adopted)</span>
-  </mat-list-item>
-</mat-list>
+<div class="pet-list-container">
+  <div class="header-section">
+    <h2>Available Pets</h2>
+    <button mat-raised-button color="primary" (click)="openCreateDialog()">
+      <mat-icon>add</mat-icon>
+      Add New Pet
+    </button>
+  </div>
+
+  <div class="pets-grid" *ngIf="pets && pets.length > 0; else noPets">
+    <mat-card *ngFor="let pet of pets" class="pet-card">
+      <mat-card-header>
+        <mat-card-title>{{ pet.name }}</mat-card-title>
+        <mat-card-subtitle>{{ pet.type }}</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <p *ngIf="pet.description">{{ pet.description }}</p>
+        <p *ngIf="pet.age">Age: {{ pet.age }} years</p>
+        <div class="status-badge" [class.adopted]="pet.adopted" [class.available]="!pet.adopted">
+          {{ pet.adopted ? 'Adopted' : 'Available' }}
+        </div>
+      </mat-card-content>
+      
+      <mat-card-actions align="end">
+        <button mat-button color="primary" (click)="viewPetDetails(pet.id)">
+          <mat-icon>visibility</mat-icon>
+          View
+        </button>
+        <button mat-button color="accent" (click)="editPet(pet)" *ngIf="!pet.adopted">
+          <mat-icon>edit</mat-icon>
+          Edit
+        </button>
+        <button mat-raised-button color="primary" (click)="adoptPet(pet.id)" 
+                *ngIf="!pet.adopted" [disabled]="isAdopting">
+          <mat-icon>favorite</mat-icon>
+          {{ isAdopting ? 'Adopting...' : 'Adopt' }}
+        </button>
+        <button mat-button color="warn" (click)="deletePet(pet.id)" *ngIf="!pet.adopted">
+          <mat-icon>delete</mat-icon>
+          Delete
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <ng-template #noPets>
+    <div class="no-pets">
+      <mat-icon class="large-icon">pets</mat-icon>
+      <h3>No pets found</h3>
+      <p>Start by adding some pets to the system!</p>
+    </div>
+  </ng-template>
+</div>
 

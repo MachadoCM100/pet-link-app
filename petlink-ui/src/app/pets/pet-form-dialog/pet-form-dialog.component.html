@@ -1,0 +1,49 @@
+<div class="pet-form-dialog-container">
+    <h2 mat-dialog-title>{{ data.isEdit ? 'Edit Pet' : 'Add New Pet' }}</h2>
+    
+    <form [formGroup]="petForm" (ngSubmit)="onSubmit()">
+      <mat-dialog-content>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Pet Name</mat-label>
+          <input matInput formControlName="name" placeholder="Enter pet name">
+          <mat-error *ngIf="petForm.get('name')?.hasError('required')">
+            Pet name is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Pet Type</mat-label>
+          <mat-select formControlName="type">
+            <mat-option value="Dog">Dog</mat-option>
+            <mat-option value="Cat">Cat</mat-option>
+            <mat-option value="Bird">Bird</mat-option>
+            <mat-option value="Rabbit">Rabbit</mat-option>
+            <mat-option value="Fish">Fish</mat-option>
+            <mat-option value="Other">Other</mat-option>
+          </mat-select>
+          <mat-error *ngIf="petForm.get('type')?.hasError('required')">
+            Pet type is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Age (years)</mat-label>
+          <input matInput type="number" formControlName="age" min="0" max="30">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Description</mat-label>
+          <textarea matInput formControlName="description" rows="3" 
+                    placeholder="Describe the pet's personality, characteristics, etc."></textarea>
+        </mat-form-field>
+      </mat-dialog-content>
+
+      <mat-dialog-actions align="end">
+        <button mat-button type="button" (click)="onCancel()">Cancel</button>
+        <button mat-raised-button color="primary" type="submit" 
+                [disabled]="petForm.invalid || isSubmitting">
+          {{ isSubmitting ? 'Saving...' : (data.isEdit ? 'Update' : 'Create') }}
+        </button>
+      </mat-dialog-actions>
+    </form>
+  </div>

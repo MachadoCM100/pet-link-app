@@ -1,0 +1,54 @@
+
+<div class="pet-detail-container" *ngIf="pet; else loading">
+    <div class="detail-header">
+    <button mat-icon-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h2>{{ pet.name }}</h2>
+    </div>
+
+    <mat-card class="pet-detail-card">
+    <mat-card-header>
+        <mat-card-title>{{ pet.name }}</mat-card-title>
+        <mat-card-subtitle>{{ pet.type }}</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+        <div class="detail-grid">
+        <div class="detail-item">
+            <strong>Type:</strong> {{ pet.type }}
+        </div>
+        <div class="detail-item" *ngIf="pet.age">
+            <strong>Age:</strong> {{ pet.age }} years old
+        </div>
+        <div class="detail-item">
+            <strong>Status:</strong> 
+            <span class="status-badge" [class.adopted]="pet.adopted" [class.available]="!pet.adopted">
+            {{ pet.adopted ? 'Adopted' : 'Available for Adoption' }}
+            </span>
+        </div>
+        <div class="detail-item" *ngIf="pet.description">
+            <strong>Description:</strong>
+            <p>{{ pet.description }}</p>
+        </div>
+        <div class="detail-item">
+            <strong>Added:</strong> {{ pet.createdAt | date:'medium' }}
+        </div>
+        </div>
+    </mat-card-content>
+    
+    <mat-card-actions align="end" *ngIf="!pet.adopted">
+        <button mat-raised-button color="primary" (click)="adoptPet()" [disabled]="isAdopting">
+        <mat-icon>favorite</mat-icon>
+        {{ isAdopting ? 'Adopting...' : 'Adopt This Pet' }}
+        </button>
+    </mat-card-actions>
+    </mat-card>
+</div>
+
+<ng-template #loading>
+    <div class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading pet details...</p>
+    </div>
+</ng-template>
