@@ -460,5 +460,5 @@ beforeEach(() => {
 
 ## Next Steps
 
-- [Backend API Structure](../backend/01-api-structure.md)
-- [Authentication and JWT](../backend/02-authentication-jwt.md)
+- [Backend API Structure](../backend-old/01-api-structure.md)
+- [Authentication and JWT](../backend-old/02-authentication-jwt.md)

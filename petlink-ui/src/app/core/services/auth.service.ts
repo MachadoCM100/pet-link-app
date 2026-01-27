@@ -12,7 +12,7 @@ export class AuthService {
   private readonly tokenKey = 'jwtToken';
 
   constructor(
-    private http: HttpClient, 
+    private http: HttpClient,
     private router: Router,
     private apiConfig: ApiConfigService,
     private notificationService: NotificationService

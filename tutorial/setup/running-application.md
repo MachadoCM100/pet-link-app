@@ -409,7 +409,7 @@ Once you have the application running:
 
 1. [Testing Guide](./testing-guide.md) - Learn how to test the application
 2. [Frontend Tutorial](../frontend/01-application-structure.md) - Understand the Angular code
-3. [Backend Tutorial](../backend/01-api-structure.md) - Understand the .NET API code
+3. [Backend Tutorial](../backend-old/01-api-structure.md) - Understand the .NET API code
 
 ## Getting Help
 

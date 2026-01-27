@@ -48,14 +48,14 @@ PetLink Application
 
 ### Backend (.NET Core/C#)
 
-1. [API Project Structure](./backend/01-api-structure.md)
-2. [Authentication and JWT](./backend/02-authentication-jwt.md)
-3. [Controllers and Endpoints](./backend/03-controllers-endpoints.md)
-4. [Security and CORS](./backend/04-security-cors.md)
-5. [Configuration and Startup](./backend/05-configuration-startup.md)
-6. [Service Layer Architecture](./backend/06-service-layer-architecture.md)
-7. [Models and DTOs](./backend/07-models-dtos.md)
-8. **[Error Handling and Validation](./backend/08-error-handling-validation.md)** ⭐
+1. [API Project Structure](backend-old/01-api-structure.md)
+2. [Authentication and JWT](backend-old/02-authentication-jwt.md)
+3. [Controllers and Endpoints](backend-old/03-controllers-endpoints.md)
+4. [Security and CORS](backend-old/04-security-cors.md)
+5. [Configuration and Startup](backend-old/05-configuration-startup.md)
+6. [Service Layer Architecture](backend-old/06-service-layer-architecture.md)
+7. [Models and DTOs](backend-old/07-models-dtos.md)
+8. **[Error Handling and Validation](backend-old/08-error-handling-validation.md)** ⭐
 
 ### Getting Started
 

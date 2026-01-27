@@ -32,7 +32,7 @@ The PetLink frontend is built using Angular 18+ with TypeScript. It follows Angu
   ├── pet-detail.component.html # Pet detail template
   ├── pet-detail.component.scss # Pet detail styles
   ├── pet.service.ts            # Handles pet-related API calls
-  └── pet.model.ts              # Pet-specific model (if different from shared)
+
 ```
 
 ## Key Components
