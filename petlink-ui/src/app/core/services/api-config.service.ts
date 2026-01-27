@@ -9,7 +9,6 @@ export interface ApiEndpoints {
   };
   pets: {
     base: string;
-    list: string;
     byId: (id: number) => string;
     adopt: (id: number) => string;
   };
@@ -26,10 +25,9 @@ export class ApiConfigService {
       refresh: `${this.baseUrl}/auth/refresh`,
     },
     pets: {
-      base: `${this.baseUrl}/api/pets`,
-      list: `${this.baseUrl}/api/pets`,
-      byId: (id: number) => `${this.baseUrl}/api/pets/${id}`,
-      adopt: (id: number) => `${this.baseUrl}/api/pets/${id}/adopt`,
+      base: `${this.baseUrl}/pets`,
+      byId: (id: number) => `${this.baseUrl}/pets/${id}`,
+      adopt: (id: number) => `${this.baseUrl}/pets/${id}/adopt`,
     }
   };
 
@@ -41,14 +39,14 @@ export class ApiConfigService {
   getEndpoint(path: keyof ApiEndpoints | string): string {
     const pathParts = path.split('.');
     let endpoint: any = this.endpoints;
-    
+
     for (const part of pathParts) {
       endpoint = endpoint[part];
       if (!endpoint) {
         throw new Error(`API endpoint not found: ${path}`);
       }
     }
-    
+
     return endpoint;
   }
 

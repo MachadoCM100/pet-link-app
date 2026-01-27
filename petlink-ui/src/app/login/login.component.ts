@@ -15,7 +15,7 @@ export class LoginComponent {
     username: '',
     password: ''
   };
-  
+
   isLoading = false;
   uiErrors: string[] = [];
 
@@ -28,10 +28,10 @@ export class LoginComponent {
   onSubmit(): void {
     // Step 1: UI validation for immediate feedback
     const validation: UIValidationResult = this.uiValidation.validateLoginForm(
-      this.loginRequest.username, 
+      this.loginRequest.username,
       this.loginRequest.password
     );
-    
+
     if (!validation.isValid) {
       this.uiErrors = validation.errors;
       return;

@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { ApiConfigService } from '../core/services/api-config.service';
-import { 
-  ApiResponse, 
-  Pet, 
-  CreatePetRequest, 
-  UpdatePetRequest, 
-  PaginatedResponse 
+import {
+  ApiResponse,
+  Pet,
+  CreatePetRequest,
+  UpdatePetRequest,
+  PaginatedResponse
 } from '../core/models/api.models';
 import { NotificationService } from '../core/notification/notification.service';
 
@@ -24,7 +24,7 @@ export class PetService {
    * Get all pets with centralized error handling
    */
   getPets(): Observable<ApiResponse<Pet[]>> {
-    return this.http.get<ApiResponse<Pet[]>>(this.apiConfig.endpoints.pets.list)
+    return this.http.get<ApiResponse<Pet[]>>(this.apiConfig.endpoints.pets.base)
       .pipe(
         tap(response => {
           if (response.success) {

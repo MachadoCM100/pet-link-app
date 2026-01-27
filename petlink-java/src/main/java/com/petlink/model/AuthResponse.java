@@ -7,6 +7,8 @@ import lombok.Setter;
 @Setter
 public class AuthResponse {
     private String token;
+    private String username;
+    private String expiresAt;
 
 }
 
