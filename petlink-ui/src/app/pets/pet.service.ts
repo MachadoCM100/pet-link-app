@@ -24,7 +24,7 @@ export class PetService {
    * Get all pets with centralized error handling
    */
   getPets(): Observable<ApiResponse<Pet[]>> {
-    return this.http.get<ApiResponse<Pet[]>>(this.apiConfig.endpoints.pets.base)
+    return this.http.get<ApiResponse<Pet[]>>(this.apiConfig.endpoints.pets.list)
       .pipe(
         tap(response => {
           if (response.success) {
@@ -56,7 +56,7 @@ export class PetService {
   createPet(request: CreatePetRequest): Observable<ApiResponse<Pet>> {
     // No client-side business logic validation
     // Backend will validate business rules and return appropriate errors
-    return this.http.post<ApiResponse<Pet>>(this.apiConfig.endpoints.pets.base, request)
+    return this.http.post<ApiResponse<Pet>>(this.apiConfig.endpoints.pets.list, request)
       .pipe(
         tap(response => {
           if (response.success) {

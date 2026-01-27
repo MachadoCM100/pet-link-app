@@ -14,8 +14,9 @@ public class WebSecurityConfig {
             // TO-DO: remove csrf disable in production
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().authenticated()
+//                .requestMatchers("/api/auth/**").permitAll()
+//                .anyRequest().authenticated()
+                    .anyRequest().permitAll()
             );
         return http.build();
     }

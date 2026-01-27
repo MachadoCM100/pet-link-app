@@ -2,13 +2,13 @@ import { Injectable } from '@angular/core';
 
 /**
  * Frontend UI Validation Service
- * 
+ *
  * RESPONSIBILITY: Only UI/UX validation for immediate user feedback
  * - Required field checks
  * - Basic format validation (email, phone patterns)
  * - UI input length limits (prevent UI breaking)
  * - Client-side user experience improvements
- * 
+ *
  * NOT RESPONSIBLE FOR:
  * - Business logic validation (belongs in backend)
  * - Authorization checks
@@ -35,7 +35,7 @@ export interface UIValidationResult {
   providedIn: 'root'
 })
 export class UIValidationService {
-  
+
   private readonly config: UIValidationConfig = {
     ui: {
       maxInputLength: 500,           // Prevent extremely long inputs

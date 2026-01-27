@@ -8,7 +8,7 @@ export interface ApiEndpoints {
     refresh: string;
   };
   pets: {
-    base: string;
+    list: string;
     byId: (id: number) => string;
     adopt: (id: number) => string;
   };
@@ -25,7 +25,7 @@ export class ApiConfigService {
       refresh: `${this.baseUrl}/auth/refresh`,
     },
     pets: {
-      base: `${this.baseUrl}/pets`,
+      list: `${this.baseUrl}/pets/getAllPets`,
       byId: (id: number) => `${this.baseUrl}/pets/${id}`,
       adopt: (id: number) => `${this.baseUrl}/pets/${id}/adopt`,
     }
