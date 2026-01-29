@@ -7,6 +7,8 @@ import com.petlink.model.dto.AuthResponse;
 import com.petlink.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -24,11 +26,15 @@ public class AuthController extends BaseController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<Object>> login(@Valid @RequestBody AuthRequest request) {
-        if (authService.validateUser(request.getUsername(), request.getPassword())) {
+        try {
+            Authentication authentication = authService.authenticate(request.getUsername(), request.getPassword());
             AuthResponse response = new AuthResponse();
             response.setToken("dummy-jwt-token"); // Replace with real JWT
+            response.setUsername(authentication.getName());
+            // Optionally set expiresAt or other info
             return success(response);
+        } catch (AuthenticationException ex) {
+            return error("Invalid credentials", org.springframework.http.HttpStatus.UNAUTHORIZED);
         }
-        return error("Invalid credentials", org.springframework.http.HttpStatus.UNAUTHORIZED);
     }
 }

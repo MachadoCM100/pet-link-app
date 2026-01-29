@@ -7,6 +7,7 @@ import com.petlink.service.PetService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -22,11 +23,13 @@ public class PetController extends BaseController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<PetDto>>> getAllPets() {
         return success(petService.getAllPets());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Object>> getPetById(@PathVariable Long id) {
         PetDto petDto = petService.getPetById(id);
         if (petDto != null) {
@@ -37,11 +40,13 @@ public class PetController extends BaseController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PetDto>> addPet(@Valid @RequestBody PetDto petDto) {
         return success(petService.addPet(petDto));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deletePet(@PathVariable Long id) {
         petService.deletePet(id);
         return success(null);

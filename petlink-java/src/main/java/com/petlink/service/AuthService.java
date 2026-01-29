@@ -1,5 +1,7 @@
 package com.petlink.service;
 
+import org.springframework.security.core.Authentication;
+
 public interface AuthService {
-    boolean validateUser(String username, String password);
+    Authentication authenticate(String username, String password);
 }
