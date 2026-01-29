@@ -2,8 +2,8 @@ package com.petlink.controller;
 
 import com.petlink.controller.common.ApiResponse;
 import com.petlink.controller.common.BaseController;
-import com.petlink.model.AuthRequest;
-import com.petlink.model.AuthResponse;
+import com.petlink.model.dto.AuthRequest;
+import com.petlink.model.dto.AuthResponse;
 import com.petlink.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

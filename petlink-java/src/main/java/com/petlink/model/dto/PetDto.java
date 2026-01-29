@@ -1,4 +1,4 @@
-package com.petlink.model;
+package com.petlink.model.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -11,7 +11,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Pet {
+public class PetDto {
     private Long id;
 
     @NotBlank
@@ -26,18 +26,28 @@ public class Pet {
     @Max(100)
     private int age;
 
-    public Pet(String name, String type, int age) {
+    private String description;
+    private boolean adopted;
+    private String createdAt;
+
+    public PetDto(String name, String type, int age, String description, boolean adopted, String createdAt) {
         this.name = name;
         this.type = type;
         this.age = age;
+        this.description = description;
+        this.adopted = adopted;
+        this.createdAt = createdAt;
     }
 
     @Override
     public String toString() {
-        return "Pet{" +
+        return "PetDto{" +
                 "name='" + name + '\'' +
                 ", type='" + type + '\'' +
                 ", age=" + age +
+                ", description='" + description + '\'' +
+                ", adopted=" + adopted +
+                ", createdAt='" + createdAt + '\'' +
                 '}';
     }
 }

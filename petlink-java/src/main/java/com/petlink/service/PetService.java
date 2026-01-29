@@ -1,11 +1,11 @@
 package com.petlink.service;
 
-import com.petlink.model.Pet;
+import com.petlink.model.dto.PetDto;
 import java.util.List;
 
 public interface PetService {
-    List<Pet> getAllPets();
-    Pet getPetById(Long id);
-    Pet addPet(Pet pet);
+    List<PetDto> getAllPets();
+    PetDto getPetById(Long id);
+    PetDto addPet(PetDto petDto);
     void deletePet(Long id);
 }

@@ -1,4 +1,4 @@
-package com.petlink.model;
+package com.petlink.model.dto;
 
 import lombok.Getter;
 import lombok.Setter;

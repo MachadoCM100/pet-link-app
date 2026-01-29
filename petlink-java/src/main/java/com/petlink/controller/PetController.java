@@ -2,7 +2,7 @@ package com.petlink.controller;
 
 import com.petlink.controller.common.ApiResponse;
 import com.petlink.controller.common.BaseController;
-import com.petlink.model.Pet;
+import com.petlink.model.dto.PetDto;
 import com.petlink.service.PetService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,23 +22,23 @@ public class PetController extends BaseController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Pet>>> getAllPets() {
+    public ResponseEntity<ApiResponse<List<PetDto>>> getAllPets() {
         return success(petService.getAllPets());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Object>> getPetById(@PathVariable Long id) {
-        Pet pet = petService.getPetById(id);
-        if (pet != null) {
-            return success(pet);
+        PetDto petDto = petService.getPetById(id);
+        if (petDto != null) {
+            return success(petDto);
         } else {
-            return error("Pet not found", org.springframework.http.HttpStatus.NOT_FOUND);
+            return error("PetDto not found", org.springframework.http.HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Pet>> addPet(@Valid @RequestBody Pet pet) {
-        return success(petService.addPet(pet));
+    public ResponseEntity<ApiResponse<PetDto>> addPet(@Valid @RequestBody PetDto petDto) {
+        return success(petService.addPet(petDto));
     }
 
     @DeleteMapping("/{id}")

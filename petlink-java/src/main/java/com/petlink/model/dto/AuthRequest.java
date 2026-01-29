@@ -1,4 +1,4 @@
-package com.petlink.model;
+package com.petlink.model.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
