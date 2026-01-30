@@ -25,7 +25,7 @@ export class ApiConfigService {
       refresh: `${this.baseUrl}/auth/refresh`,
     },
     pets: {
-      list: `${this.baseUrl}/pets/getAllPets`,
+      list: `${this.baseUrl}/pets`,
       byId: (id: number) => `${this.baseUrl}/pets/${id}`,
       adopt: (id: number) => `${this.baseUrl}/pets/${id}/adopt`,
     }

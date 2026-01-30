@@ -1,5 +1,6 @@
 CREATE TABLE users (
    id SERIAL PRIMARY KEY,
+   username VARCHAR(50) NOT NULL UNIQUE,
    email VARCHAR(255) NOT NULL UNIQUE,
    password VARCHAR(255) NOT NULL
 );
@@ -28,7 +29,7 @@ CREATE TABLE pets (
 );
 
 INSERT INTO roles (name) VALUES ('USER'), ('ADMIN');
-INSERT INTO users (email, password) VALUES ('user@gmail.com', 'password1');
+INSERT INTO users (username, email, password) VALUES ('user1', 'user@gmail.com', 'password1');
 INSERT INTO user_roles (user_id, role_id) VALUES (1, 1);
 INSERT INTO pets (name, type, age, description, adopted, created_at) VALUES
   ('Buddy', 'Dog', 5, 'Friendly golden retriever', false, '2026-01-01'),

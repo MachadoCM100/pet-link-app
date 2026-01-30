@@ -11,7 +11,7 @@ import { LoginComponent } from './login/login.component';
 import { NotificationComponent } from './core/notification/notification.component';
 import { GlobalErrorInterceptor } from './core/interceptors/global-error.interceptor';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
-
+import { CredentialsInterceptor } from './core/interceptors/credentials.interceptor'
 
 @NgModule({
   declarations: [
@@ -31,16 +31,9 @@ import { AuthInterceptor } from './core/interceptors/auth.interceptor';
   // This ensures that the AuthInterceptor adds the Authorization header before any errors are handled by the GlobalErrorInterceptor.
   // This is important for proper error handling and user notifications.
   providers: [
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: AuthInterceptor,
-      multi: true
-    },
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: GlobalErrorInterceptor,
-      multi: true
-    }
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: CredentialsInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: GlobalErrorInterceptor, multi: true }
   ],
   bootstrap: [AppComponent]
 })
