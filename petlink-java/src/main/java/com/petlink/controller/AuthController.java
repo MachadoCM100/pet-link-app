@@ -28,10 +28,10 @@ public class AuthController extends BaseController {
     public ResponseEntity<ApiResponse<Object>> login(@Valid @RequestBody AuthRequest request) {
         try {
             Authentication authentication = authService.authenticate(request.getUsername(), request.getPassword());
+            String token = authService.generateJwtToken(authentication);
             AuthResponse response = new AuthResponse();
-            response.setToken("dummy-jwt-token"); // Replace with real JWT
+            response.setToken(token);
             response.setUsername(authentication.getName());
-            // Optionally set expiresAt or other info
             return success(response);
         } catch (AuthenticationException ex) {
             return error("Invalid credentials", org.springframework.http.HttpStatus.UNAUTHORIZED);
