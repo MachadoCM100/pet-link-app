@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:17
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      retries: 5
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASS}
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - petlink-net
+
+  backend:
+    image: petlink-backend:${BE_VERSION}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+    networks:
+      - petlink-net
+    ports:
+      - "8080:8080"
+
+  frontend:
+    image: petlink-frontend:${FE_VERSION}
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+    networks:
+      - petlink-net
+    ports:
+      - "4200:80"
+
+volumes:
+  db_data:
+
+networks:
+  petlink-net:
+    driver: bridge

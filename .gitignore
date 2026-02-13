@@ -17,3 +17,6 @@ AssemblyInfoInputs.cache
 *.suo
 *.userosscache
 *.sln.docstates
+
+# Environment variables
+.env
