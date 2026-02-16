@@ -15,6 +15,9 @@ services:
       - petlink-net
 
   backend:
+    build:
+      context: ./petlink-java
+      target: runtime  # Builds the final runtime stage
     image: petlink-backend:${BE_VERSION}
     restart: unless-stopped
     depends_on:
@@ -30,11 +33,12 @@ services:
       - "8080:8080"
 
   frontend:
+    build:
+      context: ./petlink-ui
+      target: prod  # Builds the production stage
     image: petlink-frontend:${FE_VERSION}
     depends_on:
       - backend
-    environment:
-      NODE_ENV: production
     networks:
       - petlink-net
     ports:

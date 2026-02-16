@@ -15,9 +15,8 @@ This README provides instructions for starting the PetLink application using Doc
 
 ## Production Mode
 
-1. Build the backend image: _docker build -t petlink-backend:latest petlink-java_
-2. Build the frontend image: _docker build -t petlink-frontend:latest petlink-ui_
-3. Run: _docker compose -f docker-compose.yml up_
+1. Build the backend and frontend images: _docker compose -f docker-compose.yml build_
+2. Run: _docker compose -f docker-compose.yml up_
 - Uses pre-built images without source code mounting.
 
 ## Stopping Containers

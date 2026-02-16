@@ -14,12 +14,13 @@ CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200"]
 # ---------- Build target ----------
 FROM deps AS build
 COPY . .
-RUN npm run build
+RUN npm run build --configuration=production
 
 # ---------- Production runtime ----------
 FROM nginx:1.25-alpine AS prod
-COPY --from=build /app/dist/petlink /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /app/dist/petlink/browser /usr/share/nginx/html
+RUN rm /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 

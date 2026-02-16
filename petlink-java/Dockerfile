@@ -11,13 +11,13 @@ COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
 
 # ---------- BUILD ----------
-FROM deps AS BUILD
+FROM deps AS build
 COPY src ./src
 RUN mvn -B package -DskipTests
 
 
 # ---------- RUNTIME ----------
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
 
 # Avoid running as root for security
